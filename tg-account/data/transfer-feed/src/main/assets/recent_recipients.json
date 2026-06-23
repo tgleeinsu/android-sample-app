@@ -1,0 +1,40 @@
+[
+  {
+    "type": "account",
+    "id": "rcp-1",
+    "name": "김민수",
+    "accountNumber": "110-987-654321",
+    "bankName": "신한은행",
+    "iconUrl": "https://picsum.photos/seed/minsu/80"
+  },
+  {
+    "type": "phone",
+    "id": "rcp-2",
+    "name": "이서연",
+    "phoneNumber": "010-1234-5678",
+    "iconUrl": "https://picsum.photos/seed/seoyeon/80"
+  },
+  {
+    "type": "account",
+    "id": "rcp-3",
+    "name": "박지훈",
+    "accountNumber": "333-02-1122334",
+    "bankName": "카카오뱅크",
+    "iconUrl": "https://picsum.photos/seed/jihun/80"
+  },
+  {
+    "type": "phone",
+    "id": "rcp-4",
+    "name": "최유진",
+    "phoneNumber": "010-9876-5432",
+    "iconUrl": "https://picsum.photos/seed/yujin/80"
+  },
+  {
+    "type": "account",
+    "id": "rcp-5",
+    "name": "정현우",
+    "accountNumber": "100-033-778899",
+    "bankName": "토스뱅크",
+    "iconUrl": "https://picsum.photos/seed/hyunwoo/80"
+  }
+]

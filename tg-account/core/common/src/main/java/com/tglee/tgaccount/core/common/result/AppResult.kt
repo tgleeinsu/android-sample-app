@@ -1,7 +1,7 @@
 package com.tglee.tgaccount.core.common.result
 
 /**
- * 성공/실패를 표현하는 단순 래퍼. android_v2 의 BlindResult 컨셉을 샘플 규모에 맞게 축소한 형태.
+ * 성공/실패를 표현하는 단순 Result 래퍼.
  */
 sealed interface AppResult<out T> {
     data class Success<T>(val value: T) : AppResult<T>

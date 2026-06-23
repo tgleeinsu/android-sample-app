@@ -8,7 +8,6 @@ import com.tglee.tgaccount.domain.transferfeed.uistate.RecentPhoneItemUiState
 
 /**
  * 피드 아이템들의 콜백을 화면에서 주입하기 위한 파라미터.
- * android_v2 의 FeedItemStateParam(mainState/navController 전달) 대응.
  */
 data class TransferFeedStateParam(
     val onClickSearch: () -> Unit,

@@ -4,7 +4,7 @@ import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 
 /**
- * 화면 라우트 정의. android_v2 의 @Serializable NavPath 컨셉을 Navigation3 의 NavKey 로 옮긴 형태.
+ * 화면 라우트 정의. @Serializable NavKey 로 타입 안전 라우팅을 구성한다.
  * @Serializable 은 회전/프로세스 종료 시 백스택 복원(rememberNavBackStack)에 사용된다.
  */
 

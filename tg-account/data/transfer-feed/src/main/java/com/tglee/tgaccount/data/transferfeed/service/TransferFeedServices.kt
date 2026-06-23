@@ -25,7 +25,7 @@ interface RecentRecipientService {
     suspend fun getRecentRecipients(): List<RecentRecipientEntity>
 }
 
-/** 실제 통신 대신 로컬 assets json 을 반환하는 fake 구현. (android_v2 FakeService 패턴) */
+/** 실제 통신 대신 로컬 assets json 을 반환하는 fake 구현. */
 internal class FakeMyAccountService @Inject constructor(
     private val loader: AssetJsonLoader,
     private val failureSwitch: MockFailureSwitch,

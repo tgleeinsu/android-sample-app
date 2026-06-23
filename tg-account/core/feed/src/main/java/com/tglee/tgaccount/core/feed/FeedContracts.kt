@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 
 /**
  * 서버 드리븐 멀티바인딩 피드 프레임워크의 계약(contract).
- * android_v2 의 @UniversalItem + KSP 자동등록을 KSP 없이 Hilt 멀티바인딩으로 단순화한 형태.
+ * @UniversalItem + KSP 자동등록 대신, KSP 없이 Hilt 멀티바인딩으로 구성한 형태.
  *
  * 한 아이템을 그리려면 두 등록이 짝으로 필요하다.
  *  - 계층4: [ViewTypeStateProvider] (UiState -> FeedItemState),  @IntoMap @ClassKey(XxxUiState::class)

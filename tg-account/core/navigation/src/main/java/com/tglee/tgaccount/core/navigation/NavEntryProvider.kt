@@ -6,7 +6,7 @@ import androidx.navigation3.runtime.NavKey
 
 /**
  * 각 feature 모듈이 자신의 화면 entry 를 등록한다. Hilt @IntoSet 으로 모아
- * app 의 NavDisplay 가 한 곳에서 수집한다. (android_v2 NavGraphProvider 분산등록 컨셉)
+ * app 의 NavDisplay 가 한 곳에서 수집한다. (모듈별 분산 등록 컨셉)
  */
 interface NavEntryProvider {
     fun register(scope: EntryProviderScope<NavKey>, backStack: NavBackStack<NavKey>)

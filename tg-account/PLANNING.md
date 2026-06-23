@@ -1,14 +1,14 @@
-# 송금 샘플 앱 구현 플랜 (android_v2 아키텍처 차용)
+# 송금 샘플 앱 구현 플랜 (참조 아키텍처 차용)
 
 ## Context
 
-`tg-account` 는 현재 `:app` 단일 모듈만 있는 깨끗한 Compose 프로젝트(Hilt/Navigation/멀티모듈 없음, AGP 9.2.1 · Kotlin 2.2.10 · composeBom 2026.02.01 · minSdk 24 · targetSdk 36). 운영 프로젝트 `android_v2` 의 Clean Architecture·멀티바인딩 피드·Navigation 패턴을 차용해 2화면 송금 샘플 앱을 신규 구축한다. 목적은 요구된 기능 5종(피드 조합 / 회전 안정성 / 멀티바인딩 피드 / 송금 화면 / fake 10초 송금)을 android_v2 의 구조적 패턴 위에서 동작시키는 것이다.
+`tg-account` 는 현재 `:app` 단일 모듈만 있는 깨끗한 Compose 프로젝트(Hilt/Navigation/멀티모듈 없음, AGP 9.2.1 · Kotlin 2.2.10 · composeBom 2026.02.01 · minSdk 24 · targetSdk 36). 운영 프로젝트 참조 아키텍처의 Clean Architecture·멀티바인딩 피드·Navigation 패턴을 차용해 2화면 송금 샘플 앱을 신규 구축한다. 목적은 요구된 기능 5종(피드 조합 / 회전 안정성 / 멀티바인딩 피드 / 송금 화면 / fake 10초 송금)을 참조 아키텍처의 구조적 패턴 위에서 동작시키는 것이다.
 
-### 전수조사로 확인한 android_v2 핵심
+### 전수조사로 확인한 참조 아키텍처 핵심
 - **3-layer**: `ui → domain(usecase/vo/uistate/repository interface) → data(service/repositoryImpl/entity/mapper)`, 단방향 의존.
 - **Hilt**: `@HiltAndroidApp`, `@Binds`(repo/usecase), `@Provides`(service), `@HiltViewModel`, `@IntoMap @ClassKey` 멀티바인딩.
 - **멀티바인딩 피드**: `FeedItemUiState → FeedItemState(getKey) → @UniversalItem Composable`. `ViewTypeStateProvider`(UiState→State, `@IntoMap @ClassKey`) + KSP 생성 Provider map(State→Composable). `FeedLazyColumn` 이 `List<FeedItemUiState>` 를 `itemsIndexed` polymorphic 렌더. ViewModel 이 두 API 응답을 한 리스트로 조합.
-- **Navigation**: `@Serializable Path` 를 공용 모듈에 두고 `NavGraphProvider` 를 Hilt `@IntoSet` 분산 등록 → gateway 가 수집. ⚠️ android_v2 는 androidx.navigation **2.8.5**. 본 샘플은 요구대로 **Navigation3** 로 변환(컨셉만 차용).
+- **Navigation**: `@Serializable Path` 를 공용 모듈에 두고 `NavGraphProvider` 를 Hilt `@IntoSet` 분산 등록 → gateway 가 수집. ⚠️ 참조 아키텍처는 androidx.navigation **2.8.5**. 본 샘플은 요구대로 **Navigation3** 로 변환(컨셉만 차용).
 - **상태**: `MutableStateFlow` + sealed `UiState`, `SavedStateHandle.toRoute()` 인자 수신 + init 1회 로드(회전 시 재호출 방지), SideEffect 는 `Channel`/`receiveAsFlow`.
 
 ### 확정된 결정 (사용자 승인)
@@ -35,17 +35,17 @@ core:common  (Result, AssetJsonLoader, Dispatcher)  ◄ data,domain 의존
 core:designsystem  (Theme + 공통 Composable)  ◄ ui 의존
 ```
 
-의존 규칙(android_v2 동일): `ui:* → domain:*`(인터페이스), `data:* → domain:*`(RepoImpl 구현), `ui:* → data:*`(implementation, Hilt 모듈 자동 포함). `FeedItemUiState`/`FeedItemState` 인터페이스는 `core:feed`, 구체 UiState 는 각 domain.
+의존 규칙(참조 아키텍처와 동일): `ui:* → domain:*`(인터페이스), `data:* → domain:*`(RepoImpl 구현), `ui:* → data:*`(implementation, Hilt 모듈 자동 포함). `FeedItemUiState`/`FeedItemState` 인터페이스는 `core:feed`, 구체 UiState 는 각 domain.
 
 ---
 
 ## 빌드 인프라 (buildSrc)
 
-`buildSrc/src/main/kotlin/` precompiled convention plugin 4종 (android_v2 축소판):
+`buildSrc/src/main/kotlin/` precompiled convention plugin 4종 (참조 아키텍처 축소판):
 - `tg.android.library` — android-library + kotlin + minSdk24/target36/JDK11 공통.
 - `tg.android.hilt` — hilt plugin + ksp + hilt-compiler.
 - `tg.android.feature.ui` — android.library + hilt + compose + lifecycle-viewmodel-compose + core:designsystem 의존.
-- `tg.kotlin.library` — 순수 kotlin(필요 시). domain 은 UiState `@Stable` 헬퍼 때문에 android-library 채택(android_v2 동일).
+- `tg.kotlin.library` — 순수 kotlin(필요 시). domain 은 UiState `@Stable` 헬퍼 때문에 android-library 채택(참조 아키텍처와 동일).
 
 `libs.versions.toml` 추가: plugins(`kotlin-android`, `ksp`, `hilt`, `kotlin-serialization`, `android-library`), libraries(`hilt-android`/`hilt-compiler`, `navigation3-runtime`/`navigation3-ui`, `lifecycle-viewmodel-navigation3`, `lifecycle-viewmodel-compose`, `lifecycle-runtime-compose`, `kotlinx-serialization-json`, `kotlinx-coroutines-android`, `coil-compose`). 루트 `build.gradle.kts` 에 plugins apply false.
 
@@ -57,7 +57,7 @@ core:designsystem  (Theme + 공통 Composable)  ◄ ui 의존
 
 ### 1) 멀티바인딩 피드 (core:feed, KSP 없는 Hilt 멀티바인딩)
 - `interface FeedItemUiState`, `interface FeedItemState { fun getKey(): String }`.
-- `fun interface FeedItemRenderer { @Composable fun Render(state: FeedItemState) }` (= android_v2 `UniversalFeedItem`).
+- `fun interface FeedItemRenderer { @Composable fun Render(state: FeedItemState) }` (= 참조 아키텍처 `UniversalFeedItem`).
 - `interface ViewTypeStateProvider<in T: FeedItemUiState> { @Composable fun rememberState(uiState: T, param): FeedItemState? }`.
 - `@HiltViewModel FeedRenderViewModel` 이 `Map<Class<*>, ViewTypeStateProvider<*>>` + `Map<Class<*>, FeedItemRenderer>`(둘 다 `@JvmSuppressWildcards`) 주입.
 - `FeedLazyColumn(items: List<FeedItemUiState>)` → `itemsIndexed` → provider 로 State 변환 → renderer 로 Composable 렌더.
@@ -127,9 +127,3 @@ ui/transfer-send/.../{TransferSendRoute, TransferSendViewModel, di/NavEntryModul
 ## 주요 리스크
 - AGP 9.2.1 + KSP2 + Hilt + Navigation3 버전 호환(1단계 조기 검증, 비호환 시 버전 조정 우선).
 - Navigation3 ViewModel 스코핑: 디코레이터 미등록 시 회전/pop 동작 깨짐 → `rememberViewModelStoreNavEntryDecorator` + `rememberSavedStateNavEntryDecorator` 필수.
-
-## android_v2 참고 파일
-- `blind-common-ui/.../feed/FeedLazyColumn.kt`, `.../viewmodel/ViewTypeStateViewModel.kt`
-- `ui/alter/.../di/AlterViewTypeStateProviderModule.kt` (@IntoMap @ClassKey 예시)
-- `feature-article/.../viewmodel/PromotionLinkInputViewModel.kt` (SavedStateHandle)
-- `blind-common-ui/.../NavGraphProvider.kt` (분산 등록 컨셉)

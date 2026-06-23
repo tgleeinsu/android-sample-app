@@ -14,7 +14,7 @@ import com.tglee.tgaccount.core.navigation.TransferFeedKey
  * Navigation3 호스트. 시작 화면은 입금처 선택(TransferFeedKey).
  * - rememberNavBackStack: 회전/프로세스 종료 시 백스택 복원(@Serializable NavKey)
  * - ViewModelStore 디코레이터: NavEntry 스코프 ViewModel 이 회전에도 생존 → API 미재호출/입력값 유지
- * - 각 feature 의 NavEntryProvider 를 모아 한 곳에서 등록 (android_v2 NavGraphProvider 분산등록 컨셉)
+ * - 각 feature 의 NavEntryProvider 를 모아 한 곳에서 등록 (모듈별 분산 등록 컨셉)
  */
 @Composable
 fun TgNavHost(

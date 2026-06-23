@@ -7,7 +7,7 @@ import javax.inject.Inject
 
 /**
  * Hilt 멀티바인딩 맵을 주입받아 UiState -> State -> Composable 매핑을 수행한다.
- * android_v2 의 FeedLazyColumnViewModel + ViewTypeStateViewModel 역할을 합친 단순화 버전.
+ * UiState→State→Composable 매핑을 한곳에서 수행하는 단순화 버전.
  */
 @HiltViewModel
 class FeedRenderViewModel @Inject constructor(

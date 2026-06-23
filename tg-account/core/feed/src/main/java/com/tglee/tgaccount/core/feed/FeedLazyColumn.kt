@@ -13,7 +13,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 /**
  * 서로 다른 뷰타입의 [FeedItemUiState] 리스트를 하나의 리스트로 polymorphic 렌더링한다.
  * 각 아이템은 멀티바인딩 맵을 통해 UiState -> FeedItemState -> Composable 로 변환된다.
- * (android_v2 의 FeedLazyColumn 대응)
  */
 @Composable
 fun FeedLazyColumn(

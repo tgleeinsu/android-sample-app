@@ -34,5 +34,5 @@ include(":data:transfer-feed")
 include(":ui:transfer-feed")
 
 // Feature: transfer-send (송금)
-//include(":domain:transfer-send")
-//include(":ui:transfer-send")
+include(":domain:transfer-send")
+include(":ui:transfer-send")

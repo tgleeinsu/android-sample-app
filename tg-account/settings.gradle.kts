@@ -24,9 +24,9 @@ include(":app")
 
 // Core
 include(":core:common")
-//include(":core:designsystem")
-//include(":core:navigation")
-//include(":core:feed")
+include(":core:designsystem")
+include(":core:navigation")
+include(":core:feed")
 
 // Feature: transfer-feed (입금처 선택)
 //include(":domain:transfer-feed")

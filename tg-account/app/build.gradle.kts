@@ -7,9 +7,7 @@ plugins {
 android {
     namespace = "com.tglee.tgaccount"
     compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
+        version = release(37)
     }
 
     defaultConfig {

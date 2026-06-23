@@ -1,5 +1,1 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
-plugins {
-    alias(libs.plugins.android.application) apply false
-    alias(libs.plugins.kotlin.compose) apply false
-}
+// Top-level build file. 플러그인 버전은 buildSrc 클래스패스에서 관리되므로 여기서 선언하지 않는다.

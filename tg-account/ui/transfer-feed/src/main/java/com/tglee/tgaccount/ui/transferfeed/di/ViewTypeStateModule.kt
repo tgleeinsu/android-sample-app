@@ -39,7 +39,7 @@ internal object ViewTypeStateModule {
         @Composable
         override fun rememberState(uiState: SearchBarUiState, param: FeedItemStateParam): FeedItemState? {
             val p = param as? TransferFeedStateParam ?: return null
-            return remember(p) { SearchBarState(p.onClickSearch) }
+            return remember(uiState.query, p) { SearchBarState(uiState.query, p.onQueryChange, p.onClearQuery) }
         }
     }
 
@@ -50,7 +50,7 @@ internal object ViewTypeStateModule {
         @Composable
         override fun rememberState(uiState: MyAccountItemUiState, param: FeedItemStateParam): FeedItemState? {
             val p = param as? TransferFeedStateParam ?: return null
-            return remember(uiState, p) { MyAccountItemState(uiState) { p.onSelectMyAccount(uiState) } }
+            return remember(uiState, p) { MyAccountItemState(uiState, p.query) { p.onSelectMyAccount(uiState) } }
         }
     }
 
@@ -61,7 +61,9 @@ internal object ViewTypeStateModule {
         @Composable
         override fun rememberState(uiState: MyAccountMoreButtonUiState, param: FeedItemStateParam): FeedItemState? {
             val p = param as? TransferFeedStateParam ?: return null
-            return remember(uiState, p) { MyAccountMoreButtonState(uiState.expanded, p.onToggleMyAccountMore) }
+            return remember(uiState, p) {
+                MyAccountMoreButtonState(uiState.expanded, uiState.hiddenCount, p.onToggleMyAccountMore)
+            }
         }
     }
 
@@ -72,7 +74,7 @@ internal object ViewTypeStateModule {
         @Composable
         override fun rememberState(uiState: RecentAccountItemUiState, param: FeedItemStateParam): FeedItemState? {
             val p = param as? TransferFeedStateParam ?: return null
-            return remember(uiState, p) { RecentAccountItemState(uiState) { p.onSelectRecentAccount(uiState) } }
+            return remember(uiState, p) { RecentAccountItemState(uiState, p.query) { p.onSelectRecentAccount(uiState) } }
         }
     }
 
@@ -83,7 +85,7 @@ internal object ViewTypeStateModule {
         @Composable
         override fun rememberState(uiState: RecentPhoneItemUiState, param: FeedItemStateParam): FeedItemState? {
             val p = param as? TransferFeedStateParam ?: return null
-            return remember(uiState, p) { RecentPhoneItemState(uiState) { p.onSelectRecentPhone(uiState) } }
+            return remember(uiState, p) { RecentPhoneItemState(uiState, p.query) { p.onSelectRecentPhone(uiState) } }
         }
     }
 

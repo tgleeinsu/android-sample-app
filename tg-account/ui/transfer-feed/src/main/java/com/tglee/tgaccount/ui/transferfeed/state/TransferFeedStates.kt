@@ -7,10 +7,13 @@ import com.tglee.tgaccount.domain.transferfeed.uistate.RecentAccountItemUiState
 import com.tglee.tgaccount.domain.transferfeed.uistate.RecentPhoneItemUiState
 
 /**
- * 피드 아이템들의 콜백을 화면에서 주입하기 위한 파라미터.
+ * 피드 아이템들의 콜백/검색어를 화면에서 주입하기 위한 파라미터.
+ * [query] 는 검색 입력값이자 각 행의 하이라이트 기준으로 함께 쓰인다.
  */
 data class TransferFeedStateParam(
-    val onClickSearch: () -> Unit,
+    val query: String,
+    val onQueryChange: (String) -> Unit,
+    val onClearQuery: () -> Unit,
     val onToggleMyAccountMore: () -> Unit,
     val onSelectMyAccount: (MyAccountItemUiState) -> Unit,
     val onSelectRecentAccount: (RecentAccountItemUiState) -> Unit,
@@ -18,13 +21,16 @@ data class TransferFeedStateParam(
 ) : FeedItemStateParam
 
 data class SearchBarState(
-    val onClick: () -> Unit,
+    val value: String,
+    val onValueChange: (String) -> Unit,
+    val onClear: () -> Unit,
 ) : FeedItemState {
     override fun getKey(): String = "search_bar"
 }
 
 data class MyAccountItemState(
     val uiState: MyAccountItemUiState,
+    val query: String,
     val onClick: () -> Unit,
 ) : FeedItemState {
     override fun getKey(): String = uiState.id
@@ -32,6 +38,7 @@ data class MyAccountItemState(
 
 data class MyAccountMoreButtonState(
     val expanded: Boolean,
+    val hiddenCount: Int,
     val onClick: () -> Unit,
 ) : FeedItemState {
     override fun getKey(): String = "my_account_more"
@@ -39,6 +46,7 @@ data class MyAccountMoreButtonState(
 
 data class RecentAccountItemState(
     val uiState: RecentAccountItemUiState,
+    val query: String,
     val onClick: () -> Unit,
 ) : FeedItemState {
     override fun getKey(): String = uiState.id
@@ -46,6 +54,7 @@ data class RecentAccountItemState(
 
 data class RecentPhoneItemState(
     val uiState: RecentPhoneItemUiState,
+    val query: String,
     val onClick: () -> Unit,
 ) : FeedItemState {
     override fun getKey(): String = uiState.id

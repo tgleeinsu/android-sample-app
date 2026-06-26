@@ -2,6 +2,9 @@ package com.tglee.tgaccount.ui.transferfeed
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.tglee.tgaccount.core.common.recent.JustSentStore
+import com.tglee.tgaccount.core.common.recent.RecipientType
+import com.tglee.tgaccount.core.common.recent.SentRecipient
 import com.tglee.tgaccount.core.feed.FeedItemUiState
 import com.tglee.tgaccount.domain.transferfeed.uistate.FeedSectionHeaderUiState
 import com.tglee.tgaccount.domain.transferfeed.uistate.MyAccountItemUiState
@@ -38,6 +41,7 @@ sealed interface TransferFeedEffect {
 class TransferFeedViewModel @Inject constructor(
     private val getMyAccounts: GetMyAccountsUseCase,
     private val getRecentRecipients: GetRecentRecipientsUseCase,
+    private val justSentStore: JustSentStore,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<TransferFeedUiState>(TransferFeedUiState.Loading)
@@ -46,13 +50,28 @@ class TransferFeedViewModel @Inject constructor(
     private val _effect = Channel<TransferFeedEffect>(Channel.BUFFERED)
     val effect = _effect.receiveAsFlow()
 
+    // 검색어. Route 가 구독해 하이라이트 파라미터로 함께 내려준다.
+    private val _query = MutableStateFlow("")
+    val query = _query.asStateFlow()
+
     private var myAccounts: List<MyAccountVO> = emptyList()
     private var recentRecipients: List<RecentRecipientVO> = emptyList()
     private var expanded: Boolean = false
+    private var justSent: SentRecipient? = null
+    private var loaded: Boolean = false
 
-    // init 에서 1회만 로드. ViewModel 은 NavEntry 스코프라 회전 시에도 살아남아 API 가 재호출되지 않는다.
     init {
         load()
+        // 송금 완료 복귀 시 [방금 송금] 반영 + 검색어 초기화(1-E)를 동시에 처리.
+        // 최초 null 방출은 무시한다(아직 송금 없음).
+        viewModelScope.launch {
+            justSentStore.justSent.collect { sent ->
+                if (sent == null) return@collect
+                justSent = sent
+                _query.value = ""
+                if (loaded) rebuild()
+            }
+        }
     }
 
     private fun load() {
@@ -65,11 +84,11 @@ class TransferFeedViewModel @Inject constructor(
                     myAccounts = accountsDeferred.await()
                     recentRecipients = recentsDeferred.await()
                 }
+                loaded = true
                 rebuild()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                // 실패 시 화면은 비우고(Error) 토스트 이벤트 전송
                 _uiState.value = TransferFeedUiState.Error
                 _effect.send(TransferFeedEffect.ShowError(e.message ?: "데이터를 불러오지 못했습니다."))
             }
@@ -81,60 +100,124 @@ class TransferFeedViewModel @Inject constructor(
         rebuild()
     }
 
-    /** 두 API 응답 + UI 상태(expanded)를 조합해 하나의 피드 리스트를 만든다. */
+    fun onQueryChange(input: String) {
+        _query.value = input
+        if (loaded) rebuild()
+    }
+
+    fun onClearQuery() {
+        _query.value = ""
+        if (loaded) rebuild()
+    }
+
+    /** 두 API 응답 + UI 상태(expanded/query) + [방금 송금] 을 조합해 하나의 피드 리스트를 만든다. */
     private fun rebuild() {
+        val q = _query.value.trim()
+        val sent = justSent
+
+        // 최근 목록 = justSent(뱃지) ++ baseRecents.filter{ id != justSent.id } (중복 제거, 뱃지 1개)
+        // 내 계좌로 송금한 경우에도 SentRecipient(ACCOUNT)를 최근 최상단에 삽입.
+        val mergedRecents: List<RecentRecipientVO> =
+            if (sent == null) recentRecipients
+            else listOf(sent.toRecentVO()) + recentRecipients.filter { it.id != sent.id }
+
         val items = buildList {
             // ① 검색바
-            add(SearchBarUiState())
+            add(SearchBarUiState(query = _query.value))
 
-            // ② 내 계좌 목록 (축소 시 visibleWhenCollapsed 만)
-            val visibleAccounts =
-                if (expanded) myAccounts else myAccounts.filter { it.visibleWhenCollapsed }
-            visibleAccounts.forEach { acc ->
-                add(
-                    MyAccountItemUiState(
-                        id = acc.id,
-                        accountName = acc.accountName,
-                        accountNumber = acc.accountNumber,
-                        bankName = acc.bankName,
-                        iconUrl = acc.iconUrl,
-                    ),
-                )
-            }
+            if (q.isBlank()) {
+                // ② 내 계좌 (축소 시 showInCollapsed 만 / 펼침 시 전체)
+                val visibleAccounts =
+                    if (expanded) myAccounts else myAccounts.filter { it.showInCollapsed }
+                visibleAccounts.forEach { add(it.toUiState()) }
 
-            // ③ 더보기/접기 버튼 (숨겨진 계좌가 있을 때만)
-            val hasCollapsible = myAccounts.any { !it.visibleWhenCollapsed }
-            if (hasCollapsible) {
-                add(MyAccountMoreButtonUiState(expanded = expanded))
-            }
+                // ③ +N개 더보기 / 접기 (숨은 계좌 있을 때만)
+                val hiddenCount = myAccounts.count { !it.showInCollapsed }
+                if (hiddenCount > 0) {
+                    add(MyAccountMoreButtonUiState(expanded = expanded, hiddenCount = hiddenCount))
+                }
 
-            // ④ 최근 보낸 계좌 목록
-            if (recentRecipients.isNotEmpty()) {
-                add(FeedSectionHeaderUiState(id = "header_recent", title = "최근 보낸 계좌"))
-                recentRecipients.forEach { recipient ->
-                    when (recipient) {
-                        is RecentRecipientVO.Account -> add(
-                            RecentAccountItemUiState(
-                                id = recipient.id,
-                                name = recipient.name,
-                                accountNumber = recipient.accountNumber,
-                                bankName = recipient.bankName,
-                                iconUrl = recipient.iconUrl,
-                            ),
-                        )
+                // ④ 최근 보낸 계좌 헤더 + 목록
+                if (mergedRecents.isNotEmpty()) {
+                    add(FeedSectionHeaderUiState(id = "header_recent", title = "최근 보낸 계좌"))
+                    mergedRecents.forEach { add(it.toUiState(justSentId = sent?.id)) }
+                }
+            } else {
+                // 검색 모드: 더보기/접기 없음. 매칭된 모든 내 계좌(숨김 포함) → 매칭된 최근 목록.
+                myAccounts.filter { it.matches(q) }.forEach { add(it.toUiState()) }
 
-                        is RecentRecipientVO.Phone -> add(
-                            RecentPhoneItemUiState(
-                                id = recipient.id,
-                                name = recipient.name,
-                                phoneNumber = recipient.phoneNumber,
-                                iconUrl = recipient.iconUrl,
-                            ),
-                        )
-                    }
+                val matchedRecents = mergedRecents.filter { it.matches(q) }
+                if (matchedRecents.isNotEmpty()) {
+                    add(FeedSectionHeaderUiState(id = "header_recent", title = "최근 보낸 계좌"))
+                    matchedRecents.forEach { add(it.toUiState(justSentId = sent?.id)) }
                 }
             }
         }
         _uiState.value = TransferFeedUiState.Loaded(items)
     }
+}
+
+/* ----- 매핑/매칭 헬퍼 ----- */
+
+private fun MyAccountVO.toUiState() = MyAccountItemUiState(
+    id = id,
+    accountName = accountName,
+    accountNumber = accountNumber,
+    bankName = bankName,
+    iconUrl = iconUrl,
+)
+
+private fun RecentRecipientVO.toUiState(justSentId: String?): FeedItemUiState = when (this) {
+    is RecentRecipientVO.Account -> RecentAccountItemUiState(
+        id = id,
+        name = name,
+        accountNumber = accountNumber,
+        bankName = bankName,
+        iconUrl = iconUrl,
+        justSent = id == justSentId,
+    )
+
+    is RecentRecipientVO.Phone -> RecentPhoneItemUiState(
+        id = id,
+        name = name,
+        phoneNumber = phoneNumber,
+        iconUrl = iconUrl,
+        justSent = id == justSentId,
+    )
+}
+
+/** SentRecipient → 최근 목록 VO. 아이콘은 별도로 보관하지 않으므로 null. */
+private fun SentRecipient.toRecentVO(): RecentRecipientVO = when (type) {
+    RecipientType.ACCOUNT -> RecentRecipientVO.Account(
+        id = id,
+        name = name,
+        iconUrl = null,
+        accountNumber = accountNumber,
+        bankName = bankName,
+    )
+
+    RecipientType.PHONE -> RecentRecipientVO.Phone(
+        id = id,
+        name = name,
+        iconUrl = null,
+        phoneNumber = phoneNumber,
+    )
+}
+
+/** 계좌 매칭: 이름/은행/계좌번호 대소문자 무시 contains. */
+private fun MyAccountVO.matches(q: String): Boolean =
+    accountName.contains(q, ignoreCase = true) ||
+        bankName.contains(q, ignoreCase = true) ||
+        accountNumber.contains(q, ignoreCase = true)
+
+/** 최근 매칭: account 는 이름/은행/계좌번호, phone 은 이름/전화번호. */
+private fun RecentRecipientVO.matches(q: String): Boolean = when (this) {
+    is RecentRecipientVO.Account ->
+        name.contains(q, ignoreCase = true) ||
+            bankName.contains(q, ignoreCase = true) ||
+            accountNumber.contains(q, ignoreCase = true)
+
+    is RecentRecipientVO.Phone ->
+        name.contains(q, ignoreCase = true) ||
+            phoneNumber.contains(q, ignoreCase = true)
 }

@@ -10,7 +10,7 @@ data class MyAccountEntity(
     val accountNumber: String,
     val bankName: String,
     val iconUrl: String? = null,
-    val visibleWhenCollapsed: Boolean = false,
+    val showInCollapsed: Boolean = false,
 )
 
 /** 최근 보낸 계좌 목록 API 응답(mock json) 엔티티. type 에 따라 account/phone 으로 해석. */

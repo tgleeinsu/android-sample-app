@@ -5,7 +5,7 @@
     "accountNumber": "110-234-567890",
     "bankName": "신한은행",
     "iconUrl": "https://picsum.photos/seed/shinhan/80",
-    "visibleWhenCollapsed": true
+    "showInCollapsed": true
   },
   {
     "id": "acc-2",
@@ -13,7 +13,7 @@
     "accountNumber": "333-01-9988776",
     "bankName": "카카오뱅크",
     "iconUrl": "https://picsum.photos/seed/kakao/80",
-    "visibleWhenCollapsed": true
+    "showInCollapsed": true
   },
   {
     "id": "acc-3",
@@ -21,7 +21,7 @@
     "accountNumber": "100-022-445566",
     "bankName": "토스뱅크",
     "iconUrl": "https://picsum.photos/seed/toss/80",
-    "visibleWhenCollapsed": true
+    "showInCollapsed": true
   },
   {
     "id": "acc-4",
@@ -29,7 +29,7 @@
     "accountNumber": "210-553-112233",
     "bankName": "국민은행",
     "iconUrl": "https://picsum.photos/seed/kb/80",
-    "visibleWhenCollapsed": false
+    "showInCollapsed": false
   },
   {
     "id": "acc-5",
@@ -37,6 +37,6 @@
     "accountNumber": "777-12-345678",
     "bankName": "우리은행",
     "iconUrl": "https://picsum.photos/seed/woori/80",
-    "visibleWhenCollapsed": false
+    "showInCollapsed": false
   }
 ]

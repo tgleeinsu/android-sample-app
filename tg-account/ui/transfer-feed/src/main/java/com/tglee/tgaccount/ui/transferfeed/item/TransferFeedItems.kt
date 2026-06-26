@@ -9,7 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.tglee.tgaccount.core.designsystem.component.TgListRow
-import com.tglee.tgaccount.core.designsystem.component.TgSearchBar
+import com.tglee.tgaccount.core.designsystem.component.TgSearchField
 import com.tglee.tgaccount.core.designsystem.component.TgTextButtonRow
 import com.tglee.tgaccount.ui.transferfeed.state.MyAccountItemState
 import com.tglee.tgaccount.ui.transferfeed.state.MyAccountMoreButtonState
@@ -22,9 +22,15 @@ import com.tglee.tgaccount.ui.transferfeed.state.SectionHeaderState
  * 각 FeedItemState 에 대응하는 @Composable. (운영에선 @UniversalItem 어노테이션이 붙는 계층5)
  */
 
+private const val JUST_SENT_BADGE = "방금 송금"
+
 @Composable
 fun SearchBarItem(state: SearchBarState) {
-    TgSearchBar(hint = "계좌번호, 이름으로 검색", onClick = state.onClick)
+    TgSearchField(
+        value = state.value,
+        onValueChange = state.onValueChange,
+        onClear = state.onClear,
+    )
 }
 
 @Composable
@@ -35,13 +41,14 @@ fun MyAccountItem(state: MyAccountItemState) {
         subtitle = "${ui.bankName} ${ui.accountNumber}",
         iconUrl = ui.iconUrl,
         onClick = state.onClick,
+        highlight = state.query,
     )
 }
 
 @Composable
 fun MyAccountMoreButton(state: MyAccountMoreButtonState) {
     TgTextButtonRow(
-        text = if (state.expanded) "접기" else "내 계좌 더보기",
+        text = if (state.expanded) "접기" else "+${state.hiddenCount}개 더보기",
         onClick = state.onClick,
     )
 }
@@ -54,6 +61,8 @@ fun RecentAccountItem(state: RecentAccountItemState) {
         subtitle = "${ui.bankName} ${ui.accountNumber}",
         iconUrl = ui.iconUrl,
         onClick = state.onClick,
+        highlight = state.query,
+        badge = if (ui.justSent) JUST_SENT_BADGE else null,
     )
 }
 
@@ -65,6 +74,8 @@ fun RecentPhoneItem(state: RecentPhoneItemState) {
         subtitle = ui.phoneNumber,
         iconUrl = ui.iconUrl,
         onClick = state.onClick,
+        highlight = state.query,
+        badge = if (ui.justSent) JUST_SENT_BADGE else null,
     )
 }
 

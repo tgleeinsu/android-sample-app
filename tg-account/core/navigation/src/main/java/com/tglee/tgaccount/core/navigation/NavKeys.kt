@@ -1,6 +1,7 @@
 package com.tglee.tgaccount.core.navigation
 
 import androidx.navigation3.runtime.NavKey
+import com.tglee.tgaccount.core.common.recent.RecipientType
 import kotlinx.serialization.Serializable
 
 /**
@@ -12,10 +13,13 @@ import kotlinx.serialization.Serializable
 @Serializable
 data object TransferFeedKey : NavKey
 
-/** 송금 화면. 선택한 입금처 정보를 인자로 전달받는다. */
+/** 송금 화면. 선택한 입금처 정보를 인자로 전달받는다. 타입별 표시·[방금 송금] 식별에 필드를 확장. */
 @Serializable
 data class TransferSendKey(
-    val displayName: String,
-    val bankName: String,
-    val accountNumber: String,
+    val recipientId: String,
+    val type: RecipientType,
+    val name: String,
+    val bankName: String = "",      // ACCOUNT 전용
+    val accountNumber: String = "", // ACCOUNT 전용
+    val phoneNumber: String = "",   // PHONE 전용
 ) : NavKey

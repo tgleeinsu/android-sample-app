@@ -8,7 +8,7 @@ data class MyAccountVO(
     val bankName: String,
     val iconUrl: String?,
     /** 내 계좌 목록이 축소 상태일 때 표시할지 여부. */
-    val visibleWhenCollapsed: Boolean,
+    val showInCollapsed: Boolean,
 )
 
 /** 최근 보낸 상대방. account/phone 두 타입을 sealed 로 구분(멀티바인딩 2뷰타입). */

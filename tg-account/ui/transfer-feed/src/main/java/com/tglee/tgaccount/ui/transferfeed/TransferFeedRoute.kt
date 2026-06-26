@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tglee.tgaccount.core.common.recent.RecipientType
 import com.tglee.tgaccount.core.feed.FeedLazyColumn
 import com.tglee.tgaccount.core.navigation.TransferSendKey
 import com.tglee.tgaccount.ui.transferfeed.state.TransferFeedStateParam
@@ -28,6 +29,7 @@ fun TransferFeedRoute(
     viewModel: TransferFeedViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val query by viewModel.query.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     // 에러 토스트 (SideEffect)
@@ -40,16 +42,19 @@ fun TransferFeedRoute(
         }
     }
 
-    val param = remember(onSelectRecipient) {
+    // query 변경 시 param 을 재생성해 각 행의 하이라이트가 갱신되도록 한다(검색바 key 는 고정→포커스 유지).
+    val param = remember(query, onSelectRecipient) {
         TransferFeedStateParam(
-            onClickSearch = {
-                Toast.makeText(context, "검색은 샘플에서 생략되었습니다.", Toast.LENGTH_SHORT).show()
-            },
+            query = query,
+            onQueryChange = viewModel::onQueryChange,
+            onClearQuery = viewModel::onClearQuery,
             onToggleMyAccountMore = viewModel::onToggleMyAccountMore,
             onSelectMyAccount = { acc ->
                 onSelectRecipient(
                     TransferSendKey(
-                        displayName = acc.accountName,
+                        recipientId = acc.id,
+                        type = RecipientType.ACCOUNT,
+                        name = acc.accountName,
                         bankName = acc.bankName,
                         accountNumber = acc.accountNumber,
                     ),
@@ -58,7 +63,9 @@ fun TransferFeedRoute(
             onSelectRecentAccount = { rcp ->
                 onSelectRecipient(
                     TransferSendKey(
-                        displayName = rcp.name,
+                        recipientId = rcp.id,
+                        type = RecipientType.ACCOUNT,
+                        name = rcp.name,
                         bankName = rcp.bankName,
                         accountNumber = rcp.accountNumber,
                     ),
@@ -67,9 +74,10 @@ fun TransferFeedRoute(
             onSelectRecentPhone = { rcp ->
                 onSelectRecipient(
                     TransferSendKey(
-                        displayName = rcp.name,
-                        bankName = "",
-                        accountNumber = rcp.phoneNumber,
+                        recipientId = rcp.id,
+                        type = RecipientType.PHONE,
+                        name = rcp.name,
+                        phoneNumber = rcp.phoneNumber,
                     ),
                 )
             },

@@ -11,7 +11,7 @@ internal fun MyAccountEntity.toVO(): MyAccountVO = MyAccountVO(
     accountNumber = accountNumber,
     bankName = bankName,
     iconUrl = iconUrl,
-    visibleWhenCollapsed = visibleWhenCollapsed,
+    showInCollapsed = showInCollapsed,
 )
 
 /** type 필드로 account/phone 을 구분해 sealed VO 로 변환. 알 수 없는 type 은 제외. */

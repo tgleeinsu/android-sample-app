@@ -1,6 +1,19 @@
 package com.tglee.tgaccount.data.transferfeed.vo
 
-import com.tglee.tgaccount.data.transferfeed.entity.RecentRecipientEntity
+
+enum class RecentRecipientType(val value: String) {
+    ACCOUNT("account"),
+    PHONE("phone"),
+    NONE("")
+    ;
+
+    companion object {
+        fun find(type: String): RecentRecipientType =
+            RecentRecipientType.entries.find {
+                it.value == type
+            } ?: NONE
+    }
+}
 
 sealed interface RecentRecipientVO {
     val id: String

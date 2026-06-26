@@ -1,13 +1,9 @@
 package com.tglee.tgaccount.data.transferfeed.di
 
-import com.tglee.tgaccount.data.transferfeed.repository.MyAccountRepositoryImpl
-import com.tglee.tgaccount.data.transferfeed.repository.RecentRecipientRepositoryImpl
 import com.tglee.tgaccount.data.transferfeed.service.FakeMyAccountService
 import com.tglee.tgaccount.data.transferfeed.service.FakeRecentRecipientService
 import com.tglee.tgaccount.data.transferfeed.service.MyAccountService
 import com.tglee.tgaccount.data.transferfeed.service.RecentRecipientService
-import com.tglee.tgaccount.data.transferfeed.repository.MyAccountRepository
-import com.tglee.tgaccount.data.transferfeed.repository.RecentRecipientRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -16,7 +12,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-internal interface DataModule {
+internal interface ServiceModule {
 
     @Binds
     @Singleton
@@ -26,11 +22,5 @@ internal interface DataModule {
     @Singleton
     fun bindRecentRecipientService(impl: FakeRecentRecipientService): RecentRecipientService
 
-    @Binds
-    @Singleton
-    fun bindMyAccountRepository(impl: MyAccountRepositoryImpl): MyAccountRepository
 
-    @Binds
-    @Singleton
-    fun bindRecentRecipientRepository(impl: RecentRecipientRepositoryImpl): RecentRecipientRepository
 }

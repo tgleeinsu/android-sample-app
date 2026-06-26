@@ -1,6 +1,6 @@
 package com.tglee.tgaccount.domain.transferfeed.usecase
 
-import com.tglee.tgaccount.data.transferfeed.model.RecentRecipientVO
+import com.tglee.tgaccount.data.transferfeed.vo.RecentRecipientVO
 import com.tglee.tgaccount.data.transferfeed.repository.RecentRecipientRepository
 import javax.inject.Inject
 

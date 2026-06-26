@@ -14,8 +14,8 @@ import com.tglee.tgaccount.ui.transferfeed.uistate.RecentPhoneItemUiState
 import com.tglee.tgaccount.ui.transferfeed.uistate.SearchBarUiState
 import com.tglee.tgaccount.domain.transferfeed.usecase.GetMyAccountsUseCase
 import com.tglee.tgaccount.domain.transferfeed.usecase.GetRecentRecipientsUseCase
-import com.tglee.tgaccount.data.transferfeed.model.MyAccountVO
-import com.tglee.tgaccount.data.transferfeed.model.RecentRecipientVO
+import com.tglee.tgaccount.data.transferfeed.vo.MyAccountVO
+import com.tglee.tgaccount.data.transferfeed.vo.RecentRecipientVO
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async

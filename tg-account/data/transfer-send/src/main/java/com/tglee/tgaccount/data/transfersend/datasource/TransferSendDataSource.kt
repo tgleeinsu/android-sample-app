@@ -14,6 +14,6 @@ internal class FakeTransferSendDataSource @Inject constructor() : TransferSendDa
     }
 
     companion object {
-        private const val SEND_DELAY_MS = 10_000L
+        private const val SEND_DELAY_MS = 3_000L
     }
 }

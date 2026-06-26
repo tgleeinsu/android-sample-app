@@ -2,9 +2,9 @@ package com.tglee.tgaccount.ui.transferfeed.state
 
 import com.tglee.tgaccount.core.feed.FeedItemState
 import com.tglee.tgaccount.core.feed.FeedItemStateParam
-import com.tglee.tgaccount.domain.transferfeed.uistate.MyAccountItemUiState
-import com.tglee.tgaccount.domain.transferfeed.uistate.RecentAccountItemUiState
-import com.tglee.tgaccount.domain.transferfeed.uistate.RecentPhoneItemUiState
+import com.tglee.tgaccount.ui.transferfeed.uistate.MyAccountItemUiState
+import com.tglee.tgaccount.ui.transferfeed.uistate.RecentAccountItemUiState
+import com.tglee.tgaccount.ui.transferfeed.uistate.RecentPhoneItemUiState
 
 /**
  * 피드 아이템들의 콜백/검색어를 화면에서 주입하기 위한 파라미터.

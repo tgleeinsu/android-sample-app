@@ -1,10 +1,11 @@
-package com.tglee.tgaccount.domain.transferfeed.uistate
+package com.tglee.tgaccount.ui.transferfeed.uistate
 
 import com.tglee.tgaccount.core.feed.FeedItemUiState
 
 /**
  * 입금처 선택 피드를 구성하는 뷰타입들. 모두 [FeedItemUiState] 를 구현해
  * 하나의 List<FeedItemUiState> 로 조합되어 FeedLazyColumn 에 렌더링된다.
+ * (Google 권장 아키텍처: UI State 는 UI 레이어에 위치한다.)
  */
 
 /** ① 검색바. 현재 검색어를 반영한다. */

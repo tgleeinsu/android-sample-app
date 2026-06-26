@@ -2,8 +2,8 @@ package com.tglee.tgaccount.data.transferfeed.mapper
 
 import com.tglee.tgaccount.data.transferfeed.entity.MyAccountEntity
 import com.tglee.tgaccount.data.transferfeed.entity.RecentRecipientEntity
-import com.tglee.tgaccount.domain.transferfeed.vo.MyAccountVO
-import com.tglee.tgaccount.domain.transferfeed.vo.RecentRecipientVO
+import com.tglee.tgaccount.data.transferfeed.model.MyAccountVO
+import com.tglee.tgaccount.data.transferfeed.model.RecentRecipientVO
 
 internal fun MyAccountEntity.toVO(): MyAccountVO = MyAccountVO(
     id = id,

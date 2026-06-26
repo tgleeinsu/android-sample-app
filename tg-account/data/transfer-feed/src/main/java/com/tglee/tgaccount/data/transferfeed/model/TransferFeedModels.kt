@@ -1,6 +1,11 @@
-package com.tglee.tgaccount.domain.transferfeed.vo
+package com.tglee.tgaccount.data.transferfeed.model
 
-/** 내 계좌. (도메인 모델) */
+/**
+ * 데이터 레이어가 노출하는 모델. repository 가 반환하고 domain/ui 가 소비한다.
+ * (Google 권장 아키텍처: 데이터 레이어가 자신의 모델을 정의·공개한다.)
+ */
+
+/** 내 계좌. */
 data class MyAccountVO(
     val id: String,
     val accountName: String,

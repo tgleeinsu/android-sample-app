@@ -1,7 +1,7 @@
 package com.tglee.tgaccount.domain.transferfeed.usecase
 
-import com.tglee.tgaccount.domain.transferfeed.repository.MyAccountRepository
-import com.tglee.tgaccount.domain.transferfeed.vo.MyAccountVO
+import com.tglee.tgaccount.data.transferfeed.model.MyAccountVO
+import com.tglee.tgaccount.data.transferfeed.repository.MyAccountRepository
 import javax.inject.Inject
 
 interface GetMyAccountsUseCase {

@@ -6,8 +6,8 @@ import com.tglee.tgaccount.data.transferfeed.service.FakeMyAccountService
 import com.tglee.tgaccount.data.transferfeed.service.FakeRecentRecipientService
 import com.tglee.tgaccount.data.transferfeed.service.MyAccountService
 import com.tglee.tgaccount.data.transferfeed.service.RecentRecipientService
-import com.tglee.tgaccount.domain.transferfeed.repository.MyAccountRepository
-import com.tglee.tgaccount.domain.transferfeed.repository.RecentRecipientRepository
+import com.tglee.tgaccount.data.transferfeed.repository.MyAccountRepository
+import com.tglee.tgaccount.data.transferfeed.repository.RecentRecipientRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn

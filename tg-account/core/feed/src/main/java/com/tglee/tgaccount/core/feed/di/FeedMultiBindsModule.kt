@@ -12,7 +12,7 @@ import dagger.hilt.components.SingletonComponent
  */
 @Module
 @InstallIn(SingletonComponent::class)
-interface FeedMultibindsModule {
+interface FeedMultiBindsModule {
 
     @Multibinds
     fun stateProviders(): Map<Class<*>, ViewTypeStateProvider<*>>

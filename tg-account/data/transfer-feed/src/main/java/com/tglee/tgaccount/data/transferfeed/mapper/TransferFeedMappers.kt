@@ -14,7 +14,6 @@ internal fun MyAccountEntity.toVO() = FeedMyAccountVO(
     accountNumber = accountNumber,
     bankName = bankName,
     iconUrl = iconUrl,
-    showInCollapsed = showInCollapsed,
 )
 
 internal fun List<MyAccountEntity>.toVO() =

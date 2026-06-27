@@ -14,6 +14,5 @@ data class FeedMyAccountVO(
     val accountNumber: String,
     val bankName: String,
     val iconUrl: String?,
-    val showInCollapsed: Boolean,
 ): FeedVO
 

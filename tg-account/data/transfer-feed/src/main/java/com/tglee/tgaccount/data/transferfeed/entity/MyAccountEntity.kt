@@ -11,5 +11,4 @@ data class MyAccountEntity(
     val accountNumber: String,
     val bankName: String,
     val iconUrl: String = "",
-    val showInCollapsed: Boolean,
 )

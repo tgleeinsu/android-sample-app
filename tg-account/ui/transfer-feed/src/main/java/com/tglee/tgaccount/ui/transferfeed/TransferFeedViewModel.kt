@@ -14,8 +14,8 @@ import com.tglee.tgaccount.ui.transferfeed.uistate.RecentPhoneItemUiState
 import com.tglee.tgaccount.ui.transferfeed.uistate.SearchBarUiState
 import com.tglee.tgaccount.domain.transferfeed.usecase.GetMyAccountsUseCase
 import com.tglee.tgaccount.domain.transferfeed.usecase.GetRecentRecipientsUseCase
-import com.tglee.tgaccount.data.transferfeed.vo.MyAccountVO
-import com.tglee.tgaccount.data.transferfeed.vo.RecentRecipientVO
+import com.tglee.tgaccount.data.transferfeed.vo.FeedMyAccountVO
+import com.tglee.tgaccount.data.transferfeed.vo.FeedRecentRecipientVO
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
@@ -54,8 +54,8 @@ class TransferFeedViewModel @Inject constructor(
     private val _query = MutableStateFlow("")
     val query = _query.asStateFlow()
 
-    private var myAccounts: List<MyAccountVO> = emptyList()
-    private var recentRecipients: List<RecentRecipientVO> = emptyList()
+    private var myAccounts: List<FeedMyAccountVO> = emptyList()
+    private var recentRecipients: List<FeedRecentRecipientVO> = emptyList()
     private var expanded: Boolean = false
     private var justSent: SentRecipient? = null
     private var loaded: Boolean = false
@@ -117,7 +117,7 @@ class TransferFeedViewModel @Inject constructor(
 
         // 최근 목록 = justSent(뱃지) ++ baseRecents.filter{ id != justSent.id } (중복 제거, 뱃지 1개)
         // 내 계좌로 송금한 경우에도 SentRecipient(ACCOUNT)를 최근 최상단에 삽입.
-        val mergedRecents: List<RecentRecipientVO> =
+        val mergedRecents: List<FeedRecentRecipientVO> =
             if (sent == null) recentRecipients
             else listOf(sent.toRecentVO()) + recentRecipients.filter { it.id != sent.id }
 
@@ -159,7 +159,7 @@ class TransferFeedViewModel @Inject constructor(
 
 /* ----- 매핑/매칭 헬퍼 ----- */
 
-private fun MyAccountVO.toUiState() = MyAccountItemUiState(
+private fun FeedMyAccountVO.toUiState() = MyAccountItemUiState(
     id = id,
     accountName = accountName,
     accountNumber = accountNumber,
@@ -167,8 +167,8 @@ private fun MyAccountVO.toUiState() = MyAccountItemUiState(
     iconUrl = iconUrl,
 )
 
-private fun RecentRecipientVO.toUiState(justSentId: String?): FeedItemUiState = when (this) {
-    is RecentRecipientVO.Account -> RecentAccountItemUiState(
+private fun FeedRecentRecipientVO.toUiState(justSentId: String?): FeedItemUiState = when (this) {
+    is FeedRecentRecipientVO.Account -> RecentAccountItemUiState(
         id = id,
         name = name,
         accountNumber = accountNumber,
@@ -177,7 +177,7 @@ private fun RecentRecipientVO.toUiState(justSentId: String?): FeedItemUiState = 
         justSent = id == justSentId,
     )
 
-    is RecentRecipientVO.Phone -> RecentPhoneItemUiState(
+    is FeedRecentRecipientVO.Phone -> RecentPhoneItemUiState(
         id = id,
         name = name,
         phoneNumber = phoneNumber,
@@ -187,8 +187,8 @@ private fun RecentRecipientVO.toUiState(justSentId: String?): FeedItemUiState = 
 }
 
 /** SentRecipient → 최근 목록 VO. 아이콘은 별도로 보관하지 않으므로 null. */
-private fun SentRecipient.toRecentVO(): RecentRecipientVO = when (type) {
-    RecipientType.ACCOUNT -> RecentRecipientVO.Account(
+private fun SentRecipient.toRecentVO(): FeedRecentRecipientVO = when (type) {
+    RecipientType.ACCOUNT -> FeedRecentRecipientVO.Account(
         id = id,
         name = name,
         iconUrl = null,
@@ -196,7 +196,7 @@ private fun SentRecipient.toRecentVO(): RecentRecipientVO = when (type) {
         bankName = bankName,
     )
 
-    RecipientType.PHONE -> RecentRecipientVO.Phone(
+    RecipientType.PHONE -> FeedRecentRecipientVO.Phone(
         id = id,
         name = name,
         iconUrl = null,
@@ -205,19 +205,19 @@ private fun SentRecipient.toRecentVO(): RecentRecipientVO = when (type) {
 }
 
 /** 계좌 매칭: 이름/은행/계좌번호 대소문자 무시 contains. */
-private fun MyAccountVO.matches(q: String): Boolean =
+private fun FeedMyAccountVO.matches(q: String): Boolean =
     accountName.contains(q, ignoreCase = true) ||
         bankName.contains(q, ignoreCase = true) ||
         accountNumber.contains(q, ignoreCase = true)
 
 /** 최근 매칭: account 는 이름/은행/계좌번호, phone 은 이름/전화번호. */
-private fun RecentRecipientVO.matches(q: String): Boolean = when (this) {
-    is RecentRecipientVO.Account ->
+private fun FeedRecentRecipientVO.matches(q: String): Boolean = when (this) {
+    is FeedRecentRecipientVO.Account ->
         name.contains(q, ignoreCase = true) ||
             bankName.contains(q, ignoreCase = true) ||
             accountNumber.contains(q, ignoreCase = true)
 
-    is RecentRecipientVO.Phone ->
+    is FeedRecentRecipientVO.Phone ->
         name.contains(q, ignoreCase = true) ||
             phoneNumber.contains(q, ignoreCase = true)
 }

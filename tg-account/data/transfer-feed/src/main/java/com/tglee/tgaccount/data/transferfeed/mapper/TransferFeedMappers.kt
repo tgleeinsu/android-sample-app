@@ -2,11 +2,13 @@ package com.tglee.tgaccount.data.transferfeed.mapper
 
 import com.tglee.tgaccount.data.transferfeed.entity.MyAccountEntity
 import com.tglee.tgaccount.data.transferfeed.entity.RecentRecipientEntity
-import com.tglee.tgaccount.data.transferfeed.vo.MyAccountVO
-import com.tglee.tgaccount.data.transferfeed.vo.RecentRecipientType
-import com.tglee.tgaccount.data.transferfeed.vo.RecentRecipientVO
+import com.tglee.tgaccount.data.transferfeed.vo.FeedMyAccountVO
+import com.tglee.tgaccount.data.transferfeed.vo.FeedMyAccountVOList
+import com.tglee.tgaccount.data.transferfeed.vo.FeedRecentRecipientType
+import com.tglee.tgaccount.data.transferfeed.vo.FeedRecentRecipientVO
+import com.tglee.tgaccount.data.transferfeed.vo.FeedRecentRecipientVOList
 
-internal fun MyAccountEntity.toVO() = MyAccountVO(
+internal fun MyAccountEntity.toVO() = FeedMyAccountVO(
     id = id,
     accountName = accountName,
     accountNumber = accountNumber,
@@ -15,9 +17,16 @@ internal fun MyAccountEntity.toVO() = MyAccountVO(
     showInCollapsed = showInCollapsed,
 )
 
-internal fun RecentRecipientEntity.toVO(): RecentRecipientVO {
-    return when (RecentRecipientType.find(type)) {
-        RecentRecipientType.ACCOUNT -> RecentRecipientVO.Account(
+internal fun List<MyAccountEntity>.toVO() =
+    FeedMyAccountVOList(
+        list = this.map {
+            it.toVO()
+        }
+    )
+
+internal fun RecentRecipientEntity.toVO(): FeedRecentRecipientVO {
+    return when (FeedRecentRecipientType.find(type)) {
+        FeedRecentRecipientType.ACCOUNT -> FeedRecentRecipientVO.Account(
             id = id,
             name = name,
             iconUrl = iconUrl,
@@ -25,13 +34,20 @@ internal fun RecentRecipientEntity.toVO(): RecentRecipientVO {
             bankName = bankName,
         )
 
-        RecentRecipientType.PHONE -> RecentRecipientVO.Phone(
+        FeedRecentRecipientType.PHONE -> FeedRecentRecipientVO.Phone(
             id = id,
             name = name,
             iconUrl = iconUrl,
             phoneNumber = phoneNumber,
         )
 
-        RecentRecipientType.NONE -> RecentRecipientVO.None
+        FeedRecentRecipientType.NONE -> FeedRecentRecipientVO.None
     }
 }
+
+internal fun List<RecentRecipientEntity>.toVO() =
+    FeedRecentRecipientVOList(
+        list = this.map {
+            it.toVO()
+        }
+    )

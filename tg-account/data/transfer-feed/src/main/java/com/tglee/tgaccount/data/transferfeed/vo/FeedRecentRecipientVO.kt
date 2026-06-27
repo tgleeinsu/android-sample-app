@@ -1,21 +1,27 @@
 package com.tglee.tgaccount.data.transferfeed.vo
 
+import com.tglee.tgaccount.core.feed.FeedVO
 
-enum class RecentRecipientType(val value: String) {
+
+enum class FeedRecentRecipientType(val value: String) {
     ACCOUNT("account"),
     PHONE("phone"),
     NONE("")
     ;
 
     companion object {
-        fun find(type: String): RecentRecipientType =
-            RecentRecipientType.entries.find {
+        fun find(type: String): FeedRecentRecipientType =
+            FeedRecentRecipientType.entries.find {
                 it.value == type
             } ?: NONE
     }
 }
 
-sealed interface RecentRecipientVO {
+data class FeedRecentRecipientVOList(
+    val list: List<FeedRecentRecipientVO>
+): FeedVO
+
+sealed interface FeedRecentRecipientVO: FeedVO {
     val id: String
     val name: String
     val iconUrl: String
@@ -26,16 +32,16 @@ sealed interface RecentRecipientVO {
         override val iconUrl: String,
         val accountNumber: String,
         val bankName: String,
-    ) : RecentRecipientVO
+    ) : FeedRecentRecipientVO
 
     data class Phone(
         override val id: String,
         override val name: String,
         override val iconUrl: String,
         val phoneNumber: String,
-    ) : RecentRecipientVO
+    ) : FeedRecentRecipientVO
 
-    data object None: RecentRecipientVO {
+    data object None: FeedRecentRecipientVO {
         override val id: String = ""
         override val name: String = ""
         override val iconUrl: String = ""

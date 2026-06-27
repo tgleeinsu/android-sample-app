@@ -8,6 +8,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":core:common"))
     api(project(":data:transfer-feed"))
     implementation(libs.kotlinx.coroutines.android)
 }

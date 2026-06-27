@@ -1,12 +1,14 @@
 @file:OptIn(InternalSerializationApi::class)
-package com.tglee.tgaccount.data.transferfeed.entity
 
+package com.tglee.tgaccount.core.feed.feedmodel.entity
+
+import com.tglee.tgaccount.core.feed.marker.FeedEntity
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
 
 /** 최근 보낸 계좌 목록 API 응답(mock json) 엔티티. type 에 따라 account/phone 으로 해석. */
 @Serializable
-data class RecentRecipientEntity(
+data class FeedRecentRecipientEntity(
     val type: String,
     val id: String,
     val name: String,
@@ -14,4 +16,8 @@ data class RecentRecipientEntity(
     val accountNumber: String = "",
     val bankName: String = "",
     val iconUrl: String,
-)
+): FeedEntity
+
+data class FeedRecentRecipientEntityList(
+    val list: List<FeedRecentRecipientEntity>
+): FeedEntity

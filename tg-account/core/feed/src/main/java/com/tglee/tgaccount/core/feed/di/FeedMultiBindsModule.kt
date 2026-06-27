@@ -1,14 +1,14 @@
 package com.tglee.tgaccount.core.feed.di
 
-import com.tglee.tgaccount.core.feed.FeedItemRenderer
-import com.tglee.tgaccount.core.feed.ViewTypeStateProvider
+import com.tglee.tgaccount.core.feed.marker.FeedItemRenderer
+import com.tglee.tgaccount.core.feed.marker.ViewTypeStateProvider
 import dagger.Module
 import dagger.multibindings.Multibinds
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 
 /**
- * 어떤 feature 도 아이템을 등록하지 않은 상황에서도 빈 맵 주입이 가능하도록 @Multibinds 선언.
+ * 중앙 집중이 아닌 feature 모듈 각각에서 FeedUiState에 대한 UI와 ScreenState를 가지고 있을 수 있도록 멀티 바인딩
  */
 @Module
 @InstallIn(SingletonComponent::class)

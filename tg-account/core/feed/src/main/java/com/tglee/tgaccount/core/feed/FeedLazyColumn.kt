@@ -9,14 +9,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.tglee.tgaccount.core.feed.marker.FeedItemStateParam
+import com.tglee.tgaccount.core.feed.marker.FeedUiState
 
 /**
- * 서로 다른 뷰타입의 [FeedItemUiState] 리스트를 하나의 리스트로 polymorphic 렌더링한다.
+ * 서로 다른 뷰타입의 [com.tglee.tgaccount.core.feed.marker.FeedUiState] 리스트를 하나의 리스트로 polymorphic 렌더링한다.
  * 각 아이템은 멀티바인딩 맵을 통해 UiState -> FeedItemState -> Composable 로 변환된다.
  */
 @Composable
 fun FeedLazyColumn(
-    items: List<FeedItemUiState>,
+    items: List<FeedUiState>,
     param: FeedItemStateParam,
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),

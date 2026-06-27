@@ -1,7 +1,7 @@
 package com.tglee.tgaccount.ui.transferfeed.state
 
-import com.tglee.tgaccount.core.feed.FeedItemState
-import com.tglee.tgaccount.core.feed.FeedItemStateParam
+import com.tglee.tgaccount.core.feed.marker.FeedItemState
+import com.tglee.tgaccount.core.feed.marker.FeedItemStateParam
 import com.tglee.tgaccount.ui.transferfeed.uistate.MyAccountItemUiState
 import com.tglee.tgaccount.ui.transferfeed.uistate.RecentAccountItemUiState
 import com.tglee.tgaccount.ui.transferfeed.uistate.RecentPhoneItemUiState

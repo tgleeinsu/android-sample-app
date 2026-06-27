@@ -1,8 +1,8 @@
 package com.tglee.tgaccount.ui.transferfeed.di
 
 import androidx.compose.runtime.Composable
-import com.tglee.tgaccount.core.feed.FeedItemRenderer
-import com.tglee.tgaccount.core.feed.FeedItemState
+import com.tglee.tgaccount.core.feed.marker.FeedItemRenderer
+import com.tglee.tgaccount.core.feed.marker.FeedItemState
 import com.tglee.tgaccount.ui.transferfeed.item.MyAccountItem
 import com.tglee.tgaccount.ui.transferfeed.item.MyAccountMoreButton
 import com.tglee.tgaccount.ui.transferfeed.item.RecentAccountItem

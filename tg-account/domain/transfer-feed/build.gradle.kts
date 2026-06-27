@@ -9,6 +9,7 @@ android {
 
 dependencies {
     implementation(project(":core:common"))
+    implementation(project(":core:feed"))
     api(project(":data:transfer-feed"))
     implementation(libs.androidx.constraintlayout)
     implementation(libs.kotlinx.coroutines.android)

@@ -1,4 +1,4 @@
-package com.tglee.tgaccount.core.feed
+package com.tglee.tgaccount.core.feed.marker
 
 import androidx.compose.runtime.Composable
 
@@ -13,7 +13,7 @@ import androidx.compose.runtime.Composable
  */
 
 /** 피드에 들어가는 데이터(뷰타입) 단위. ViewModel 이 여러 API 응답을 이 타입의 리스트로 조합한다. */
-interface FeedItemUiState {
+interface FeedUiState {
     /** LazyColumn 의 안정적 key. */
     val id: String
 }
@@ -27,7 +27,7 @@ interface FeedItemState {
 }
 
 /** UiState -> FeedItemState 변환기. feature 모듈이 구현해 @IntoMap @ClassKey(UiState) 로 등록. */
-interface ViewTypeStateProvider<in T : FeedItemUiState> {
+interface ViewTypeStateProvider<in T : FeedUiState> {
     @Composable
     fun rememberState(uiState: T, param: FeedItemStateParam): FeedItemState?
 }

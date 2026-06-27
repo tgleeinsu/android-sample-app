@@ -2,6 +2,11 @@ package com.tglee.tgaccount.core.feed
 
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.ViewModel
+import com.tglee.tgaccount.core.feed.marker.FeedItemRenderer
+import com.tglee.tgaccount.core.feed.marker.FeedItemState
+import com.tglee.tgaccount.core.feed.marker.FeedItemStateParam
+import com.tglee.tgaccount.core.feed.marker.FeedUiState
+import com.tglee.tgaccount.core.feed.marker.ViewTypeStateProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -17,8 +22,8 @@ class FeedRenderViewModel @Inject constructor(
 
     @Suppress("UNCHECKED_CAST")
     @Composable
-    fun rememberState(uiState: FeedItemUiState, param: FeedItemStateParam): FeedItemState? {
-        val provider = stateProviders[uiState::class.java] as? ViewTypeStateProvider<FeedItemUiState>
+    fun rememberState(uiState: FeedUiState, param: FeedItemStateParam): FeedItemState? {
+        val provider = stateProviders[uiState::class.java] as? ViewTypeStateProvider<FeedUiState>
         return provider?.rememberState(uiState, param)
     }
 

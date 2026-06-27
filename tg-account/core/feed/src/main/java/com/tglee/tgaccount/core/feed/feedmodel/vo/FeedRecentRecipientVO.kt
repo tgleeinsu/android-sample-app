@@ -1,6 +1,6 @@
-package com.tglee.tgaccount.data.transferfeed.vo
+package com.tglee.tgaccount.core.feed.feedmodel.vo
 
-import com.tglee.tgaccount.data.transferfeed.vo.FeedVO
+import com.tglee.tgaccount.core.feed.marker.FeedVO
 
 
 enum class FeedRecentRecipientType(val value: String) {
@@ -11,15 +11,11 @@ enum class FeedRecentRecipientType(val value: String) {
 
     companion object {
         fun find(type: String): FeedRecentRecipientType =
-            FeedRecentRecipientType.entries.find {
+            entries.find {
                 it.value == type
             } ?: NONE
     }
 }
-
-data class FeedRecentRecipientVOList(
-    val list: List<FeedRecentRecipientVO>
-): FeedVO
 
 sealed interface FeedRecentRecipientVO: FeedVO {
     val id: String

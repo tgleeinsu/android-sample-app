@@ -1,9 +1,5 @@
 package com.tglee.tgaccount.data.transferfeed.di
 
-import com.tglee.tgaccount.data.transferfeed.repository.MyAccountRepository
-import com.tglee.tgaccount.data.transferfeed.repository.MyAccountRepositoryImpl
-import com.tglee.tgaccount.data.transferfeed.repository.RecentRecipientRepository
-import com.tglee.tgaccount.data.transferfeed.repository.RecentRecipientRepositoryImpl
 import com.tglee.tgaccount.data.transferfeed.repository.TransferFeedViewTypeRepository
 import com.tglee.tgaccount.data.transferfeed.repository.TransferFeedViewTypeRepositoryImpl
 import dagger.Binds
@@ -15,14 +11,6 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 internal interface RepositoryModule {
-
-    @Binds
-    @Singleton
-    fun bindMyAccountRepository(impl: MyAccountRepositoryImpl): MyAccountRepository
-
-    @Binds
-    @Singleton
-    fun bindRecentRecipientRepository(impl: RecentRecipientRepositoryImpl): RecentRecipientRepository
 
     @Binds
     @Singleton

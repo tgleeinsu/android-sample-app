@@ -1,21 +1,16 @@
 package com.tglee.tgaccount.domain.transferfeed.di
 
-import com.tglee.tgaccount.domain.transferfeed.usecase.GetMyAccountsUseCase
-import com.tglee.tgaccount.domain.transferfeed.usecase.GetMyAccountsUseCaseImpl
-import com.tglee.tgaccount.domain.transferfeed.usecase.GetRecentRecipientsUseCase
-import com.tglee.tgaccount.domain.transferfeed.usecase.GetRecentRecipientsUseCaseImpl
+import com.tglee.tgaccount.domain.transferfeed.usecase.LoadTransferFeedUseCase
+import com.tglee.tgaccount.domain.transferfeed.usecase.LoadTransferFeedUseCaseImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
+import dagger.hilt.android.components.ViewModelComponent
 
 @Module
-@InstallIn(SingletonComponent::class)
+@InstallIn(ViewModelComponent::class)
 internal interface UseCaseModule {
 
     @Binds
-    fun bindGetMyAccountsUseCase(impl: GetMyAccountsUseCaseImpl): GetMyAccountsUseCase
-
-    @Binds
-    fun bindGetRecentRecipientsUseCase(impl: GetRecentRecipientsUseCaseImpl): GetRecentRecipientsUseCase
+    fun bindLoadTransferFeedUseCase(impl: LoadTransferFeedUseCaseImpl): LoadTransferFeedUseCase
 }

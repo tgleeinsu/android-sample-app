@@ -1,51 +1,23 @@
 package com.tglee.tgaccount.domain.transferfeed.usecase
 
-import com.tglee.tgaccount.data.transferfeed.vo.FeedMyAccountVO
-import com.tglee.tgaccount.data.transferfeed.vo.FeedRecentRecipientVO
+import com.tglee.tgaccount.data.transferfeed.repository.TransferFeedViewTypeRepository
 import com.tglee.tgaccount.data.transferfeed.vo.FeedTransferFeedVO
-import com.tglee.tgaccount.domain.transferfeed.usecase.LoadTransferFeedUseCase.Action
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
+import com.tglee.tgaccount.data.transferfeed.vo.FeedVO
+import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
 
 interface LoadTransferFeedUseCase {
+    fun observe(): Flow<List<FeedVO>>
 
-    data class Action(
-        val searchKeyword: String
-    )
-
-    suspend operator fun invoke(action: Action): FeedTransferFeedVO
 }
 
 
-internal class LoadTransferFeedUseCaseImpl(
-    private val getMyAccounts: GetMyAccountsUseCase,
-    private val getRecentRecipients: GetRecentRecipientsUseCase,
+internal class LoadTransferFeedUseCaseImpl @Inject constructor(
+    val transferFeedViewTypeRepository: TransferFeedViewTypeRepository
 ) : LoadTransferFeedUseCase {
-    override suspend fun invoke(action: Action): FeedTransferFeedVO {
 
-        var myAccounts: List<FeedMyAccountVO> = emptyList()
-        var recentRecipients: List<FeedRecentRecipientVO> = emptyList()
 
-        coroutineScope {
-            val accountsDeferred = async { getMyAccounts() }
-            val recentsDeferred = async { getRecentRecipients() }
-            myAccounts = accountsDeferred.await()
-            recentRecipients = recentsDeferred.await()
-        }
-
-        val items = buildList {
-            if (action.searchKeyword.isBlank()) {
-                val visibleAccounts = myAccounts.map {
-                    add(it.showInCollapsed)
-                }
-            } else {
-
-            }
-        }
-
-    }
-
-    private fun mergeViewTypes() {
-
+    override fun observe(): Flow<List<FeedVO>> {
+        return transferFeedViewTypeRepository.getMergedViewTypes()
     }
 }

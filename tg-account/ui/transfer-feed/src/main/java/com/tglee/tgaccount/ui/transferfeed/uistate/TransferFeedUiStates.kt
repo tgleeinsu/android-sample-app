@@ -23,6 +23,12 @@ data class MyAccountItemUiState(
     val iconUrl: String?,
 ) : FeedItemUiState
 
+
+data class MyAccountUiStateList(
+    override val id: String,
+    val list: List<MyAccountItemUiState>,
+) : FeedItemUiState
+
 /** ③ 내 계좌 더보기/접기 버튼. 라벨은 "+{hiddenCount}개 더보기" / "접기". */
 data class MyAccountMoreButtonUiState(
     val expanded: Boolean,
@@ -30,24 +36,35 @@ data class MyAccountMoreButtonUiState(
     override val id: String = "my_account_more",
 ) : FeedItemUiState
 
-/** ④ 최근 보낸 계좌(account 타입). [justSent] 면 [방금 송금] 뱃지 대상. */
-data class RecentAccountItemUiState(
+data class RecentRecipientUiStateList(
     override val id: String,
-    val name: String,
-    val accountNumber: String,
-    val bankName: String,
-    val iconUrl: String?,
-    val justSent: Boolean = false,
+    val list: List<RecentRecipientUiState>,
 ) : FeedItemUiState
 
-/** ④ 최근 보낸 상대(phone 타입). [justSent] 면 [방금 송금] 뱃지 대상. */
-data class RecentPhoneItemUiState(
-    override val id: String,
-    val name: String,
-    val phoneNumber: String,
-    val iconUrl: String?,
-    val justSent: Boolean = false,
-) : FeedItemUiState
+sealed interface RecentRecipientUiState {
+    /** ④ 최근 보낸 계좌(account 타입). [justSent] 면 [방금 송금] 뱃지 대상. */
+    data class Account(
+        override val id: String,
+        val name: String,
+        val accountNumber: String,
+        val bankName: String,
+        val iconUrl: String?,
+        val justSent: Boolean = false,
+    ) : FeedItemUiState
+
+    /** ④ 최근 보낸 상대(phone 타입). [justSent] 면 [방금 송금] 뱃지 대상. */
+    data class Phone(
+        override val id: String,
+        val name: String,
+        val phoneNumber: String,
+        val iconUrl: String?,
+        val justSent: Boolean = false,
+    ) : FeedItemUiState
+
+    data class None(
+        override val id: String,
+    ) : FeedItemUiState
+}
 
 /** 섹션 헤더(최근 보낸 계좌 구분용, 선택적). */
 data class FeedSectionHeaderUiState(

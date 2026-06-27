@@ -4,6 +4,8 @@ import com.tglee.tgaccount.data.transferfeed.repository.MyAccountRepository
 import com.tglee.tgaccount.data.transferfeed.repository.MyAccountRepositoryImpl
 import com.tglee.tgaccount.data.transferfeed.repository.RecentRecipientRepository
 import com.tglee.tgaccount.data.transferfeed.repository.RecentRecipientRepositoryImpl
+import com.tglee.tgaccount.data.transferfeed.repository.TransferFeedViewTypeRepository
+import com.tglee.tgaccount.data.transferfeed.repository.TransferFeedViewTypeRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -21,4 +23,8 @@ internal interface RepositoryModule {
     @Binds
     @Singleton
     fun bindRecentRecipientRepository(impl: RecentRecipientRepositoryImpl): RecentRecipientRepository
+
+    @Binds
+    @Singleton
+    fun bindTransferFeedViewTypeRepository(impl: TransferFeedViewTypeRepositoryImpl): TransferFeedViewTypeRepository
 }

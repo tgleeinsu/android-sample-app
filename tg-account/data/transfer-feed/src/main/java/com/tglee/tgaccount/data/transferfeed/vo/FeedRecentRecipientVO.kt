@@ -1,6 +1,6 @@
 package com.tglee.tgaccount.data.transferfeed.vo
 
-import com.tglee.tgaccount.core.feed.FeedVO
+import com.tglee.tgaccount.data.transferfeed.vo.FeedVO
 
 
 enum class FeedRecentRecipientType(val value: String) {

@@ -1,6 +1,6 @@
 package com.tglee.tgaccount.data.transferfeed.repository
 
-import com.tglee.tgaccount.core.feed.FeedVO
+import com.tglee.tgaccount.data.transferfeed.vo.FeedVO
 import com.tglee.tgaccount.data.transferfeed.vo.FeedMyAccountMoreButtonVO
 import com.tglee.tgaccount.data.transferfeed.vo.FeedMyAccountVOList
 import com.tglee.tgaccount.data.transferfeed.vo.FeedRecentRecipientVOList

@@ -10,13 +10,13 @@ import com.tglee.tgaccount.core.feed.feedmodel.uiState.FeedTransferSearchBarUiSt
 import com.tglee.tgaccount.core.feed.marker.FeedItemState
 import com.tglee.tgaccount.core.feed.marker.FeedItemStateParam
 import com.tglee.tgaccount.core.feed.marker.ViewTypeStateProvider
+import com.tglee.tgaccount.ui.transferfeed.feeditem.event.TransferFeedEvent
 import com.tglee.tgaccount.ui.transferfeed.feeditem.state.FeedMyAccountItemState
 import com.tglee.tgaccount.ui.transferfeed.feeditem.state.FeedMyAccountMoreButtonState
 import com.tglee.tgaccount.ui.transferfeed.feeditem.state.FeedRecentAccountItemState
 import com.tglee.tgaccount.ui.transferfeed.feeditem.state.FeedRecentPhoneItemState
 import com.tglee.tgaccount.ui.transferfeed.feeditem.state.FeedSearchBarState
 import com.tglee.tgaccount.ui.transferfeed.feeditem.state.FeedSectionHeaderState
-import com.tglee.tgaccount.ui.transferfeed.feeditem.state.TransferFeedStateParam
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -37,17 +37,15 @@ internal object ViewTypeStateModule {
             override fun rememberState(
                 uiState: FeedTransferSearchBarUiState,
                 param: FeedItemStateParam
-            ): FeedItemState? {
-                val p = param as? TransferFeedStateParam ?: return null
-                return remember(uiState, p) {
+            ): FeedItemState =
+                remember(uiState, param) {
                     FeedSearchBarState(
                         uiState = uiState,
-                        value = "",
-                        onValueChange = {},
-                        onClear = {}
+                        value = uiState.searchKeyword,
+                        onValueChange = { param.onEvent(TransferFeedEvent.ChangeSearchKeyword(it)) },
+                        onClear = { param.onEvent(TransferFeedEvent.ClearSearchKeyword) },
                     )
                 }
-            }
         }
 
     @Provides
@@ -59,15 +57,13 @@ internal object ViewTypeStateModule {
             override fun rememberState(
                 uiState: FeedMyAccountUiState,
                 param: FeedItemStateParam
-            ): FeedItemState? {
-                val p = param as? TransferFeedStateParam ?: return null
-                return remember(uiState, p) {
+            ): FeedItemState =
+                remember(uiState, param) {
                     FeedMyAccountItemState(
                         uiState = uiState,
-                        onClick = {},
+                        onClick = { param.onEvent(TransferFeedEvent.SelectMyAccount(uiState)) },
                     )
                 }
-            }
         }
 
     @Provides
@@ -79,16 +75,14 @@ internal object ViewTypeStateModule {
             override fun rememberState(
                 uiState: FeedMyAccountMoreButtonUiState,
                 param: FeedItemStateParam
-            ): FeedItemState? {
-                val p = param as? TransferFeedStateParam ?: return null
-                return remember(uiState, p) {
+            ): FeedItemState =
+                remember(uiState, param) {
                     FeedMyAccountMoreButtonState(
                         uiState.expanded,
                         uiState.hiddenCount,
-                        p.onToggleMyAccountMore
+                        onClick = { param.onEvent(TransferFeedEvent.ToggleMyAccountMore) },
                     )
                 }
-            }
         }
 
     @Provides
@@ -100,15 +94,14 @@ internal object ViewTypeStateModule {
             override fun rememberState(
                 uiState: FeedRecentRecipientUiState.Account,
                 param: FeedItemStateParam
-            ): FeedItemState? {
-                val p = param as? TransferFeedStateParam ?: return null
-                return remember(uiState, p) {
+            ): FeedItemState =
+                remember(uiState, param) {
                     FeedRecentAccountItemState(
-                        uiState,
-                        p.searchKeyword
-                    ) { p.onSelectRecentAccount(uiState) }
+                        uiState = uiState,
+                        query = "", // TODO 검색 하이라이트: 조립 UseCase 가 UiState 에 검색어를 stamp 할 예정
+                        onClick = { param.onEvent(TransferFeedEvent.SelectRecentAccount(uiState)) },
+                    )
                 }
-            }
         }
 
     @Provides
@@ -120,15 +113,14 @@ internal object ViewTypeStateModule {
             override fun rememberState(
                 uiState: FeedRecentRecipientUiState.Phone,
                 param: FeedItemStateParam
-            ): FeedItemState? {
-                val p = param as? TransferFeedStateParam ?: return null
-                return remember(uiState, p) {
+            ): FeedItemState =
+                remember(uiState, param) {
                     FeedRecentPhoneItemState(
-                        uiState,
-                        p.searchKeyword
-                    ) { p.onSelectRecentPhone(uiState) }
+                        uiState = uiState,
+                        query = "", // TODO 검색 하이라이트: 조립 UseCase 가 UiState 에 검색어를 stamp 할 예정
+                        onClick = { param.onEvent(TransferFeedEvent.SelectRecentPhone(uiState)) },
+                    )
                 }
-            }
         }
 
     @Provides

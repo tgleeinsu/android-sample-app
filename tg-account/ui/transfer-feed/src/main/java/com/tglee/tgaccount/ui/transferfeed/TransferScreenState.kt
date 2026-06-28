@@ -9,16 +9,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tglee.tgaccount.core.feed.marker.FeedItemStateParam
 import com.tglee.tgaccount.core.navigation.TransferSendKey
 import com.tglee.tgaccount.domain.transferfeed.screenuistate.TransferScreenUiState
 import com.tglee.tgaccount.domain.transferfeed.usecase.GetTransferScreenUiStateUseCase
-import com.tglee.tgaccount.ui.transferfeed.feeditem.state.TransferFeedStateParam
+import com.tglee.tgaccount.ui.transferfeed.feeditem.event.TransferFeedEvent
 import com.tglee.tgaccount.ui.transferfeed.vm.TransferScreenViewModel
 
 @Stable
 internal data class TransferScreenState(
     val screenUiState: TransferScreenUiState,
-    val itemStateParam: TransferFeedStateParam,
+    val itemStateParam: FeedItemStateParam,
 )
 
 
@@ -41,35 +42,30 @@ internal fun rememberTransferScreenState(
         }
     }
 
-    val itemStateParam = remember(onSelectRecipient) {
-        TransferFeedStateParam(
-            searchKeyword = "", // TODO
-            onChangeSearchKeyword = {}, // TODO
-            onClearSearchKeyword = {}, // TODO
-            onToggleMyAccountMore = {}, // TODO
-            onSelectMyAccount = { acc ->
-                onSelectRecipient(
-                    TransferSendKey(
-                        recipientId = acc.id,
-                        name = acc.accountName,
-                    ),
-                )
-            },
-            onSelectRecentAccount = { rcp ->
-                onSelectRecipient(
-                    TransferSendKey(
-                        recipientId = rcp.id,
-                        name = rcp.name,
-                    ),
-                )
-            },
-            onSelectRecentPhone = { rcp ->
-                onSelectRecipient(
-                    TransferSendKey(
-                        recipientId = rcp.id,
-                        name = rcp.name,
-                    ),
-                )
+    val itemStateParam = remember {
+        FeedItemStateParam(
+            onEvent = { event ->
+                when (event) {
+                    is TransferFeedEvent.SelectMyAccount ->
+                        onSelectRecipient(
+                            TransferSendKey(recipientId = event.uiState.id, name = event.uiState.accountName),
+                        )
+
+                    is TransferFeedEvent.SelectRecentAccount ->
+                        onSelectRecipient(
+                            TransferSendKey(recipientId = event.uiState.id, name = event.uiState.name),
+                        )
+
+                    is TransferFeedEvent.SelectRecentPhone ->
+                        onSelectRecipient(
+                            TransferSendKey(recipientId = event.uiState.id, name = event.uiState.name),
+                        )
+
+                    TransferFeedEvent.ToggleMyAccountMore -> Unit // TODO 조립 UseCase
+                    is TransferFeedEvent.ChangeSearchKeyword -> Unit // TODO 조립 UseCase
+                    TransferFeedEvent.ClearSearchKeyword -> Unit // TODO 조립 UseCase
+                    else -> Unit // 이 화면이 모르는 이벤트(타 모듈 아이템 등)는 무시
+                }
             },
         )
     }

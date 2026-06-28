@@ -18,8 +18,18 @@ interface FeedUiState {
     val id: String
 }
 
-/** 화면 컨텍스트(콜백/네비게이션)를 담아 UiState->State 변환 시 주입하는 파라미터. */
-interface FeedItemStateParam
+/** 피드 아이템이 화면으로 올려보내는 상호작용 이벤트. 각 feature 가 구현해 자신의 이벤트를 정의한다. */
+interface FeedEvent
+
+/**
+ * UiState -> FeedItemState 변환 시 주입되는 **공용 컨텍스트**.
+ * feature provider 는 feature 전용 param 으로 캐스팅하지 않고 이 공용 타입에만 의존하며,
+ * 클릭·검색 등 상호작용은 [onEvent] 로 [FeedEvent] 를 올려보낸다.
+ * → transfer 의존 없이 core:feed 만으로도 어떤 모듈이든 동일한 provider 를 재사용할 수 있다.
+ */
+class FeedItemStateParam(
+    val onEvent: (FeedEvent) -> Unit = {},
+)
 
 /** UiState 에서 파생된, 콜백까지 바인딩된 렌더링용 상태. */
 interface FeedItemState {

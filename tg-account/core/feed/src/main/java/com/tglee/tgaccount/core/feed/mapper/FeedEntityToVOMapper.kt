@@ -2,14 +2,18 @@ package com.tglee.tgaccount.core.feed.mapper
 
 import com.tglee.tgaccount.core.feed.feedmodel.entity.FeedMyAccountEntity
 import com.tglee.tgaccount.core.feed.feedmodel.entity.FeedMyAccountEntityList
+import com.tglee.tgaccount.core.feed.feedmodel.entity.FeedMyAccountMoreButtonEntity
 import com.tglee.tgaccount.core.feed.feedmodel.entity.FeedRecentRecipientEntity
 import com.tglee.tgaccount.core.feed.feedmodel.entity.FeedRecentRecipientEntityList
+import com.tglee.tgaccount.core.feed.feedmodel.entity.FeedSectionHeaderEntity
 import com.tglee.tgaccount.core.feed.feedmodel.entity.FeedTransferSearchBarEntity
+import com.tglee.tgaccount.core.feed.feedmodel.vo.FeedMyAccountMoreButtonVO
 import com.tglee.tgaccount.core.feed.feedmodel.vo.FeedMyAccountVO
 import com.tglee.tgaccount.core.feed.feedmodel.vo.FeedMyAccountVOList
 import com.tglee.tgaccount.core.feed.feedmodel.vo.FeedRecentRecipientType
 import com.tglee.tgaccount.core.feed.feedmodel.vo.FeedRecentRecipientVO
 import com.tglee.tgaccount.core.feed.feedmodel.vo.FeedRecentRecipientVOList
+import com.tglee.tgaccount.core.feed.feedmodel.vo.FeedSectionHeaderVO
 import com.tglee.tgaccount.core.feed.feedmodel.vo.FeedTransferSearchBarVO
 import com.tglee.tgaccount.core.feed.feedmodel.vo.NotSupportedViewTypeVO
 import com.tglee.tgaccount.core.feed.marker.FeedEntity
@@ -29,6 +33,19 @@ class FeedEntityToVOMapperImpl @Inject constructor() : FeedEntityToVOMapper {
                 is FeedTransferSearchBarEntity -> {
                     FeedTransferSearchBarVO(
                         searchKeyword = searchKeyword
+                    )
+                }
+
+                is FeedMyAccountMoreButtonEntity -> {
+                    FeedMyAccountMoreButtonVO(
+                        expanded = expanded,
+                        hiddenCount = hiddenCount
+                    )
+                }
+
+                is FeedSectionHeaderEntity -> {
+                    FeedSectionHeaderVO(
+                        title = title
                     )
                 }
 

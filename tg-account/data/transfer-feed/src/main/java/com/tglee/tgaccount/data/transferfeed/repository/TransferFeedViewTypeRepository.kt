@@ -1,5 +1,7 @@
 package com.tglee.tgaccount.data.transferfeed.repository
 
+import com.tglee.tgaccount.core.feed.feedmodel.vo.FeedMyAccountMoreButtonVO
+import com.tglee.tgaccount.core.feed.feedmodel.vo.FeedSectionHeaderVO
 import com.tglee.tgaccount.core.feed.feedmodel.vo.FeedTransferSearchBarVO
 import com.tglee.tgaccount.core.feed.mapper.FeedEntityToVOMapper
 import com.tglee.tgaccount.core.feed.marker.FeedVO
@@ -25,8 +27,6 @@ internal class TransferFeedViewTypeRepositoryImpl @Inject constructor(
     private val myAccounts = MutableStateFlow(listOf<FeedVO>())
     private val recentRecipients = MutableStateFlow(listOf<FeedVO>())
 
-    private val searchBar = MutableStateFlow(FeedTransferSearchBarVO(""))
-
 
     override suspend fun refresh() {
         myAccounts.value = myAccountService.getMyAccounts().map {
@@ -36,19 +36,23 @@ internal class TransferFeedViewTypeRepositoryImpl @Inject constructor(
         recentRecipients.value = recentRecipientService.getRecentRecipients().map {
             feedEntityToVOMapper.entityToVO(it)
         }
-
-        searchBar.value = FeedTransferSearchBarVO("")
     }
 
+    /**
+     * 본래 서버 드리븐으로 내려주던 feed response를 강제 구현.
+     * searchBar·더보기·섹션헤더는 서버 기본값에 해당하는 정적 VO 라 flow 없이 그대로 끼워넣는다.
+     * (펼침·검색·조건부 노출 등 동적 조립은 상위 UseCase 담당)
+     * */
     override fun getMergedViewTypes(): Flow<List<FeedVO>> {
         return combine(
-            searchBar,
             myAccounts,
             recentRecipients,
-        ) { searchBar, my, recent ->
+        ) { my, recent ->
             buildList {
-                add(searchBar)
+                add(FeedTransferSearchBarVO(""))
                 addAll(my)
+                add(FeedMyAccountMoreButtonVO(expanded = false, hiddenCount = 0))
+                add(FeedSectionHeaderVO(title = ""))
                 addAll(recent)
             }
         }

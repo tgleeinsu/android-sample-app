@@ -2,8 +2,10 @@ package com.tglee.tgaccount.ui.transferfeed.di
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import com.tglee.tgaccount.core.feed.feedmodel.uiState.FeedMyAccountMoreButtonUiState
 import com.tglee.tgaccount.core.feed.feedmodel.uiState.FeedMyAccountUiState
 import com.tglee.tgaccount.core.feed.feedmodel.uiState.FeedRecentRecipientUiState
+import com.tglee.tgaccount.core.feed.feedmodel.uiState.FeedSectionHeaderUiState
 import com.tglee.tgaccount.core.feed.feedmodel.uiState.FeedTransferSearchBarUiState
 import com.tglee.tgaccount.core.feed.marker.FeedItemState
 import com.tglee.tgaccount.core.feed.marker.FeedItemStateParam
@@ -15,10 +17,6 @@ import com.tglee.tgaccount.ui.transferfeed.feeditem.state.FeedRecentPhoneItemSta
 import com.tglee.tgaccount.ui.transferfeed.feeditem.state.FeedSearchBarState
 import com.tglee.tgaccount.ui.transferfeed.feeditem.state.FeedSectionHeaderState
 import com.tglee.tgaccount.ui.transferfeed.feeditem.state.TransferFeedStateParam
-import com.tglee.tgaccount.ui.transferfeed.uistate.FeedSectionHeaderUiState
-import com.tglee.tgaccount.ui.transferfeed.uistate.MyAccountMoreButtonUiState
-import com.tglee.tgaccount.ui.transferfeed.uistate.RecentAccountItemUiState
-import com.tglee.tgaccount.ui.transferfeed.uistate.RecentPhoneItemUiState
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -74,12 +72,12 @@ internal object ViewTypeStateModule {
 
     @Provides
     @IntoMap
-    @ClassKey(MyAccountMoreButtonUiState::class)
+    @ClassKey(FeedMyAccountMoreButtonUiState::class)
     fun myAccountMore(): ViewTypeStateProvider<*> =
-        object : ViewTypeStateProvider<MyAccountMoreButtonUiState> {
+        object : ViewTypeStateProvider<FeedMyAccountMoreButtonUiState> {
             @Composable
             override fun rememberState(
-                uiState: MyAccountMoreButtonUiState,
+                uiState: FeedMyAccountMoreButtonUiState,
                 param: FeedItemStateParam
             ): FeedItemState? {
                 val p = param as? TransferFeedStateParam ?: return null

@@ -1,186 +1,183 @@
 # TG Account — 송금 샘플 앱 설명서
 
-**Google 권장 아키텍처(Modern App Architecture)** 기반으로 구성한 **2화면 송금 샘플 앱**.
-입금처 선택 피드(검색/확장축소/방금송금)와 송금 화면(타입별 표시/금액 상한/10초 fake 송금)을 11개 멀티모듈 위에 올렸다.
+## 0. 설명서
+
+**Google 권장 아키텍처(Modern App Architecture)** 기반의 **2화면 송금 샘플 앱**.
+입금처를 고르는 **피드 화면**과, 금액을 입력해 보내는 **송금 화면**을 11개 멀티모듈 위에 올렸다.
+피드는 운영 앱의 **서버 드리븐 동적 피드**를 KSP 없이 **Hilt 멀티바인딩**으로 축소 재현한 것이 핵심이다.
 
 - AGP 9.2.x · Kotlin 2.2.x · Compose BOM 2026.02 · minSdk 24 / targetSdk 36 / compileSdk 37
-- 빌드 인프라: `buildSrc` precompiled convention plugin 3종 (`tg.android.library`, `tg.android.compose`, `tg.android.hilt`)
-- 멀티바인딩 피드 + Navigation3 + Hilt
-- 상세 기획: [`PLANNING.md`](./PLANNING.md)(1차) · [`PLANNING-2.md`](./PLANNING-2.md)(2차 확장)
+- 빌드 인프라: `buildSrc` precompiled convention plugin 3종 — `tg.android.library` · `tg.android.compose` · `tg.android.hilt`
+- Navigation3(`androidx.navigation3`) + Hilt 멀티바인딩으로 화면·피드아이템을 **모듈별 분산 등록**
 
-> **아키텍처 한 줄 요약** — Google Modern App Architecture: 레이어는 **UI → Domain(optional) → Data** 로 의존이
-> 한 방향으로만 내려간다. repository **인터페이스와 구현이 모두 Data 레이어에 위치**하고(데이터 레이어의 공개 API),
-> Domain 의 use case 가 그 인터페이스에 의존한다. (의존성 역전으로 repo 인터페이스를 domain 에 두는 Clean Architecture 와 구분된다.)
+> **아키텍처 한 줄 요약** — 의존이 **UI → Domain → Data** 한 방향으로만 내려간다.
+> repository **인터페이스와 구현이 모두 Data 레이어**에 있고(데이터 레이어의 공개 API), Domain 의 UseCase 가 그 인터페이스에 의존한다.
+> (repo 인터페이스를 Domain 에 두는 의존성 역전형 Clean Architecture 와 구분되는 지점.)
+
+> ### ⚠️ 현재 마이그레이션 상태 (정직한 표기)
+> 이 앱은 **옛 명령형 조립(`TransferFeedViewModel.rebuild()`) → 새 서버 드리븐 피드 파이프라인** 으로 이전 중이다.
+> - ✅ 완료: 피드 5계층 파이프라인(모델을 `core:feed` 로 이동), 반응형 UseCase, 에러의 **일회성 이벤트화**(Toast), 멀티바인딩 등록.
+> - 🚧 미완: **검색 하이라이트 · 더보기 확장/축소 · "방금 송금" 뱃지** 의 동적 조립. 현재 `TransferFeedStateParam` 은 `// TODO` 스텁이고, repository 는 더보기/헤더를 **기본값으로 무조건 주입**한다. → 조립 전담 UseCase 도입이 다음 단계.
+> - 🗑️ 참고용(dead): `TransferFeedRoute.kt`, `vm/TransferFeedViewModel.kt` — 옛 명령형 방식의 잔재(주석/비활성).
 
 ---
 
 ## 1. 전체 워크플로우 (런타임 흐름)
 
-사용자 입력 → UI → ViewModel → UseCase → Repository → DataSource(Fake) → assets JSON 으로 내려갔다가,
-데이터 모델로 매핑되어 UiState 리스트로 조합되고, 멀티바인딩 피드를 통해 다시 화면으로 올라온다.
+사용자 입력 → UI → ViewModel → UseCase → Repository → Service(Fake) → assets JSON 으로 내려갔다가,
+`Entity → VO → UiState` 로 매핑돼 리스트로 조합되고, 멀티바인딩 피드를 통해 다시 화면으로 올라온다.
 
 ```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│  MainActivity (@AndroidEntryPoint)                                             │
-│    └─ TgTheme → TgNavHost                                                      │
-│         └─ NavDisplay( backStack = rememberNavBackStack(TransferFeedKey),      │
-│              decorators = [ SaveableStateHolder, ViewModelStore ],  ← 회전 생존 │
-│              entryProvider = AppNavViewModel.entryProviders.forEach{ register } │
-│            )                                                                    │
-└───────────────┬───────────────────────────────────────────┬──────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────┐
+│  MainActivity (@AndroidEntryPoint) → TgTheme → TgNavHost                          │
+│    NavDisplay( backStack = rememberNavBackStack(TransferFeedKey),                 │
+│               entryProvider = AppNavViewModel.entryProviders.forEach{ register } )│
+└───────────────┬───────────────────────────────────────────┬─────────────────────┘
         TransferFeedKey                                TransferSendKey
                 │                                              │
-   ┌────────────▼─────────────┐                  ┌────────────▼──────────────┐
-   │  [화면 A] 입금처 선택       │   아이템 선택        │  [화면 B] 송금              │
-   │  TransferFeedRoute  (UI)  │ ──TransferSendKey─▶│  TransferSendRoute  (UI)  │
-   │   collect uiState/query   │  (id,type,name,..) │   collect uiState         │
-   └────────────┬─────────────┘                    └────────────┬─────────────┘
+   ┌────────────▼─────────────┐   아이템 선택        ┌────────────▼──────────────┐
+   │ [화면 A] 입금처 선택 피드   │ ─TransferSendKey──▶ │ [화면 B] 송금               │
+   │  TransferScreen (Compose) │ (recipientId,name) │  TransferSendRoute (Compose)│
+   │  rememberTransferScreenState                   │  collect uiState / effect  │
+   └────────────┬─────────────┘                     └────────────┬─────────────┘
                 │ hiltViewModel()                                │ hiltViewModel()
-   ┌────────────▼─────────────┐                    ┌────────────▼─────────────┐
-   │  TransferFeedViewModel    │                    │  TransferSendViewModel    │
-   │  init{ load(); collect    │                    │  onAmountChange(상한 200만)│
-   │        justSentStore }    │                    │  onClickSend(recipient)   │
-   │  rebuild() → UiState 리스트│                    │     │                     │
-   └───┬───────────────┬──────┘                    │     ▼                     │
-       │ getMyAccounts │ getRecentRecipients        │  SendMoneyUseCase (domain)│
-       ▼ (domain)      ▼ (domain)                   │     │                     │
-   GetMyAccountsUseCase  GetRecentRecipientsUseCase │     ▼                     │
-       │               │                            │  TransferSendRepository   │
-       ▼ (data)        ▼ (data)                     │   (data, interface)       │
-   MyAccountRepository  RecentRecipientRepository   │     │ Impl                │
-       │ (interface+Impl, Mapper Entity→Model)      │     ▼                     │
-       ▼               ▼                            │  FakeTransferSendDataSrc  │
-   FakeMyAccountService  FakeRecentRecipientService │   delay(10_000) (fake)    │
-       │ delay(400) + 실패토글  (DataSource)         │     │ 완료                │
-       ▼               ▼                            │     ▼                     │
-   AssetJsonLoader (assets/*.json)                  │  JustSentStore.markSent() │◀─┐
-   my_accounts.json / recent_recipients.json        │     │                     │  │ @Singleton
-                                                    │     ▼                     │  │ in-memory
-                                                    │  Effect.NavigateBackToFeed│  │ 공유
-                                                    └────────────┬─────────────┘  │
-                                                                 │ backStack.pop  │
-                                                   ┌─────────────▼─────────────┐  │
-                                                   │ 피드 복귀: justSent collect │──┘
-                                                   │ → query="" + rebuild        │
-                                                   │ → [방금송금] 뱃지·최상단 이동 │
-                                                   └─────────────────────────────┘
+   ┌────────────▼─────────────┐                     ┌────────────▼─────────────┐
+   │  TransferScreenViewModel  │                     │  TransferSendViewModel    │
+   │   observe().stateIn       │                     │   onClickSend()           │
+   │   observeEvent()→Toast    │                     │     │                     │
+   └────────────┬─────────────┘                     │     ▼                     │
+                │ observe()                          │  SendMoneyUseCase (domain)│
+   ┌────────────▼──────────────────────┐            │     │                     │
+   │ GetTransferScreenUiStateUseCase    │            │     ▼                     │
+   │  combine(loading, items)→ScreenState            │  TransferSendRepository   │
+   │  실패 → UiEvent.ShowErrorToast(채널)│            │   (data, interface+Impl)  │
+   └────────────┬──────────────────────┘            │     │                     │
+                │ observe()                          │     ▼                     │
+   ┌────────────▼─────────────┐                      │  FakeTransferSendDataSrc  │
+   │  LoadTransferFeedUseCase  │                      │   delay(3초) (fake)       │
+   │   VO → UiState 매핑        │                      │     │ 완료 → Effect       │
+   └────────────┬─────────────┘                      │     ▼  NavigateBackToFeed │
+                │ getMergedViewTypes(): Flow<List<FeedVO>>    └──────┬───────────┘
+   ┌────────────▼─────────────┐                                     │ backStack.pop
+   │ TransferFeedViewTypeRepository (data)                          │
+   │  combine(myAccounts, recents) + searchBar/더보기/헤더 기본값 주입 │
+   └────────────┬─────────────┘                                     ▼
+                │                                          [화면 A] 복귀
+   ┌────────────▼─────────────┐
+   │ MyAccountService / RecentRecipientService (Fake, delay)          │
+   │   → AssetJsonLoader → assets/my_accounts.json·recent_recipients.json
+   └──────────────────────────┘
 ```
 
 **핵심 흐름 포인트**
-- **단방향 데이터 흐름**: UI 이벤트 → ViewModel 상태변경 → `StateFlow` 방출 → 재구성. SideEffect 는 `Channel`(`NavigateBackToFeed`, `ShowError`).
-- **회전 안정성**: ViewModel 이 NavEntry 스코프(`rememberViewModelStoreNavEntryDecorator`)라 회전 시 파괴되지 않음 → `init` 의 API 로드가 재실행되지 않고 입력값(query/amount/expanded)도 유지.
-- **방금 송금(cross-screen)**: 송금 완료 시 `JustSentStore`(@Singleton)에 기록 → 피드 ViewModel 이 `collect` 로 감지 → 검색어 초기화 + 최근 목록 최상단 이동 + 뱃지(가장 최근 1건).
-- **금액 상한**: `onAmountChange` 에서 200만원 초과 입력은 거부(이전 값 유지) + 안내 다이얼로그.
+- **단방향 데이터 흐름**: 데이터가 바뀌면 `Flow.combine → stateIn` 으로 자동 갱신. UI 는 `collectAsStateWithLifecycle` 로 구독만 한다.
+- **에러 = 일회성 이벤트**: 로드 실패는 상태(state)가 아니라 `Channel` 기반 `observeEvent()` 로 흘러나오고, UI 가 `LaunchedEffect(Unit)` 으로 collect 해 **Toast 한 번** 띄운다(회전·재구성에 재발화 없음). `TransferScreenUiState` 에는 Error 가 없다(Loading/Loaded 뿐).
+- **송금 → 복귀(SideEffect)**: 송금 완료 시 `TransferSendEffect.NavigateBackToFeed`(Channel) → `onSendComplete()` → `backStack.removeLastOrNull()`.
+- **회전 안정성**: ViewModel 이 NavEntry 스코프라 회전 시 파괴되지 않아 `observe()` 구독·입력값이 유지된다.
 
 ---
 
 ## 2. 모듈 간 의존성 관계 (11개 모듈)
 
-**Google Modern App Architecture**: 컴파일 의존이 `UI → Domain → Data` 로 **한 방향으로만 내려간다.**
-화살표는 "의존한다(→)" 방향이며, **Data 가 최하위(다른 feature 모듈에 의존하지 않음)** 이다.
+**Google Modern App Architecture**: 컴파일 의존이 `UI → Domain → Data` 로 **한 방향**. **Data 가 최하위**(다른 feature 를 전혀 모름)다. 화살표 `→` 는 "의존한다".
 
 ```
                               ┌─────────┐
-                              │  :app   │  @HiltAndroidApp / NavDisplay 호스트
+                              │  :app   │  @HiltAndroidApp · NavDisplay 호스트
                               └────┬────┘
         ┌──────────────┬──────────┼───────────┬──────────────────┐
         ▼              ▼          ▼            ▼                  ▼
-  :ui:transfer-feed        :ui:transfer-send   :core:feed   :core:designsystem
-   (UI Layer)               (UI Layer)         (멀티바인딩 계약)  (Compose 컴포넌트)
-        │                        │
-        │ → domain, data, core   │ → domain, core
-        ▼                        ▼
-  :domain:transfer-feed     :domain:transfer-send         (Domain Layer: use case)
-        │                        │
-        │ api → data             │ → data
-        ▼                        ▼
-  :data:transfer-feed       :data:transfer-send           (Data Layer: 최하위)
-        │  repository(if+impl)    │ repository(if+impl)
-        │  + model + datasource   │ + datasource
-        ▼                        (coroutines)
-  :core:common ◀── :core:navigation (api, RecipientType/JustSentStore)
-  (최하위 공용)
+ :ui:transfer-feed  :ui:transfer-send  :core:feed   :core:designsystem  :core:navigation
+   (UI)               (UI)             (피드 계약+모델) (Compose 컴포넌트)  (Nav 계약)
+        │                  │
+        ▼                  ▼
+ :domain:transfer-feed  :domain:transfer-send        (Domain: UseCase)
+        │  api               │
+        ▼                    ▼
+ :data:transfer-feed    :data:transfer-send          (Data: 최하위 · repo if+impl)
+        │  api(core:feed)
+        ▼
+ :core:feed                  :core:navigation ──api──▶ :core:common
+ :core:common / :core:designsystem                    (최하위 공용)
 ```
 
 **레이어 분류**
 
 | 레이어 | 모듈 | 역할 |
 |--------|------|------|
-| **UI** | `:ui:transfer-feed`, `:ui:transfer-send` (+`:app` 호스트) | Compose 화면 · ViewModel · **UI State** |
-| **Domain** | `:domain:transfer-feed`, `:domain:transfer-send` | use case (data repository 인터페이스에 의존) |
-| **Data** | `:data:transfer-feed`, `:data:transfer-send` | **repository 인터페이스+구현** · 데이터 소스 · 모델 |
-| **Core** | `:core:common`, `:core:designsystem`, `:core:navigation`, `:core:feed` | 레이어 공통 기반 |
+| **UI** | `:ui:transfer-feed` · `:ui:transfer-send` (+`:app` 호스트) | Compose 화면 · ViewModel · 화면 State · 피드 아이템 등록 |
+| **Domain** | `:domain:transfer-feed` · `:domain:transfer-send` | UseCase (data repository 인터페이스에 의존) |
+| **Data** | `:data:transfer-feed` · `:data:transfer-send` | repository(인터페이스+구현) · Service/DataSource(Fake) |
+| **Core** | `:core:common` · `:core:designsystem` · `:core:navigation` · `:core:feed` | 레이어 공통 기반 |
 
-**의존성 표 (project 의존만 표기)**
+**의존성 표 (project 의존만, 검증값)**
 
 | 모듈 | 의존 대상 |
 |------|-----------|
-| `:app` | `:core:navigation`, `:core:designsystem`, `:core:feed`, `:ui:transfer-feed`, `:ui:transfer-send` |
-| `:ui:transfer-feed` | `:domain:transfer-feed`, `:data:transfer-feed`, `:core:common`, `:core:feed`, `:core:designsystem`, `:core:navigation` |
-| `:ui:transfer-send` | `:domain:transfer-send`, `:core:common`, `:core:designsystem`, `:core:navigation` |
-| `:domain:transfer-feed` | **api** `:data:transfer-feed` |
+| `:app` | `:core:navigation` · `:core:designsystem` · `:core:feed` · `:ui:transfer-feed` · `:ui:transfer-send` |
+| `:ui:transfer-feed` | `:core:feed` · `:core:designsystem` · `:core:navigation` · `:domain:transfer-feed` |
+| `:ui:transfer-send` | `:core:common` · `:core:designsystem` · `:core:navigation` · `:domain:transfer-send` |
+| `:domain:transfer-feed` | `:core:common` · `:core:feed` · **api** `:data:transfer-feed` |
 | `:domain:transfer-send` | `:data:transfer-send` |
-| `:data:transfer-feed` | `:core:common` (※ domain 에 의존하지 않음) |
-| `:data:transfer-send` | (없음 — coroutines 라이브러리만) |
+| `:data:transfer-feed` | `:core:common` · **api** `:core:feed` (※ domain 에 의존하지 않음) |
+| `:data:transfer-send` | (project 의존 없음 — coroutines 만) |
 | `:core:navigation` | **api** `:core:common` |
-| `:core:feed` / `:core:designsystem` / `:core:common` | (없음 — 라이브러리만) |
+| `:core:feed` · `:core:designsystem` · `:core:common` | (project 의존 없음) |
 
-**규칙**
-- `ui → domain → data` 단방향. **Data 레이어가 최하위**라 domain/ui 를 전혀 모른다 → 의존성 역전이 없다(= Clean 과 구분되는 지점).
-- repository **인터페이스+구현이 모두 data 에** 있고(데이터 레이어의 공개 API), domain 의 use case 가 그 인터페이스를 호출한다.
-- data 가 노출하는 **모델**(`MyAccountVO`, `RecentRecipientVO`)을 use case 가 반환하므로, `domain → data` 는 `api` 로 전파해 UI 가 모델을 함께 본다.
-- **UI State**(`SearchBarUiState` 등)는 UI 관심사라 `ui` 레이어에 둔다.
-- `core:common` 이 최하위 공용. `core:navigation` 이 `RecipientType`/`JustSentStore` 를 노출하려고 `api(:core:common)` 전파(순환 없음).
+**규칙·검증 결과**
+- `ui → domain → data` 단방향. **역방향(data→domain) 0건** — Data 가 최하위라 의존성 역전이 없다(Clean 과 구분점).
+- **도메인 순수성 ✅**: domain 모듈에 `android.*`/`androidx.*` import 0건.
+- **순환 의존성 없음**(그래프가 DAG). repository 인터페이스+구현이 모두 data 에 있고, UseCase 가 그 인터페이스를 호출.
+- `domain:transfer-feed` 가 `api(data:...)` 인 이유: Hilt 가 data 의 repo 를 UseCase 에 주입하려면 data 가 classpath 에 있어야 함. 단 **public API 로 data 타입을 노출하진 않으므로 `implementation` 으로 낮춰도 됨**(자매 모듈 `domain:transfer-send` 는 이미 `implementation`).
 
 ---
 
-## 3. 멀티바인딩 피드 워크플로우
+## 3. 멀티바인딩 피드 워크플로우 (모듈 포함)
 
-서버 드리븐 다형 피드를 KSP 없이 **Hilt `@IntoMap @ClassKey`** 두 단계 맵으로 구성. 새 뷰타입 추가 = `@IntoMap` 2개 등록.
+서버 드리븐 다형 피드를 **KSP 없이 Hilt `@IntoMap @ClassKey` 두 단계 맵**으로 구성. 새 뷰타입 추가 = 모델 3계층 + `@IntoMap` 2개 등록.
 
 ```
-  ViewModel.rebuild()
-        │  여러 데이터 모델(VO)을 하나의 List<FeedItemUiState> 로 조합
+[data] TransferFeedViewTypeRepository.getMergedViewTypes(): Flow<List<FeedVO>>
+        │  Service(Fake)→Entity, FeedEntityToVOMapper(Entity→VO), searchBar/더보기/헤더 기본 VO 주입
         ▼
-  List<FeedItemUiState>  ── SearchBarUiState, MyAccountItemUiState, MoreButton,
-        │                    RecentAccountItemUiState, RecentPhoneItemUiState, SectionHeader …
+[domain] LoadTransferFeedUseCase.observe(): Flow<List<FeedUiState>>
+        │  FeedVOToUiStateMapper (VO → UiState)            ← 계층3
         ▼
-  FeedLazyColumn( items, param )
-        │  items(key = id, contentType = uiState::class)
+[domain] GetTransferScreenUiStateUseCase.observe(): Flow<TransferScreenUiState>
+        │  combine(loading, items) → Loading | Loaded(items)
         ▼
-  FeedRenderViewModel  ◀── Hilt 주입 ──┐
-        │                              │
-        │  ① rememberState(uiState)    │   Map<Class<*>, ViewTypeStateProvider<*>>   ← 계층4
-        │      provider = map[uiState::class]                                         (@IntoMap @ClassKey(XxxUiState))
-        │      provider.rememberState(uiState, param) ──▶ FeedItemState              ViewTypeStateModule
-        │                              │
-        │  ② rendererFor(state)        │   Map<Class<*>, FeedItemRenderer>           ← 계층5
-        │      renderer = map[state::class]                                           (@IntoMap @ClassKey(XxxState))
-        │      renderer.Render(state) ──▶ @Composable                               FeedRendererModule
+[ui] TransferScreenViewModel.uiState (stateIn)  +  eventChannel(observeEvent)
         ▼
-  화면에 행 렌더 (TgSearchField / TgListRow(highlight,badge) / TgTextButtonRow / …)
-
-
-  한 뷰타입 = 3요소 + 2등록의 짝:
-  ┌────────────────────────────────────────────────────────────────────────────┐
-  │  XxxUiState (ui/uistate)      XxxState (ui/state)        XxxItem (ui/item)    │
-  │   : FeedItemUiState     ──▶    : FeedItemState     ──▶    @Composable         │
-  │     val id                       getKey()                                     │
-  │        │                            ▲                          ▲             │
-  │        │  계층4 등록: @IntoMap @ClassKey(XxxUiState::class)      │             │
-  │        └──ViewTypeStateProvider ────┘                          │             │
-  │                                     계층5 등록: @IntoMap @ClassKey(XxxState)  │
-  │                                     └──FeedItemRenderer ───────┘             │
-  └────────────────────────────────────────────────────────────────────────────┘
-        @Multibinds 로 빈 맵 기본 제공(FeedMultibindsModule) → 어떤 feature 도 미등록 가능
+[ui] TransferScreen → FeedLazyColumn( items, param = TransferFeedStateParam )
+        │  items(key = uiState.id, contentType = uiState::class)
+        ▼
+[core:feed] FeedRenderViewModel  (Hilt 가 두 맵 주입)
+        │  ① rememberState(uiState, param)
+        │     provider = stateProviders[uiState::class.java]                  ← 계층4
+        │     provider.rememberState(...) ─▶ FeedItemState        (@IntoMap @ClassKey(XxxUiState))
+        │  ② rendererFor(state)
+        │     renderer = renderers[state::class.java]                         ← 계층5
+        │     renderer.Render(state) ─▶ @Composable               (@IntoMap @ClassKey(XxxState))
+        ▼
+   행 렌더: TgSearchField · TgListRow(highlight,badge) · TgTextButtonRow · Text(헤더)
 ```
+
+**계층·모듈 배치**
+
+| 계층 | 산출물 | 위치(모듈) | 등록 |
+|---|---|---|---|
+| 1 Entity | `Feed*Entity` | `core:feed/feedmodel/entity` | — |
+| 2 VO | `Feed*VO` | `core:feed/feedmodel/vo` | `FeedEntityToVOMapper`(core:feed) |
+| 3 UiState | `Feed*UiState : FeedUiState` | `core:feed/feedmodel/uiState` | `FeedVOToUiStateMapper`(core:feed) |
+| 4 State | `Feed*State : FeedItemState` | `ui:transfer-feed/feeditem/state` | `ViewTypeStateModule` `@IntoMap @ClassKey(UiState)` |
+| 5 Composable | `*Item` | `ui:transfer-feed/feeditem` | `FeedRendererModule` `@IntoMap @ClassKey(State)` |
 
 **키 포인트**
-- **계약은 `core:feed`**: `FeedItemUiState`/`FeedItemState`/`ViewTypeStateProvider`/`FeedItemRenderer`/`FeedLazyColumn`/`FeedRenderViewModel`.
-- **계층4 (`ViewTypeStateProvider`)**: `UiState → FeedItemState`. 화면 콜백/검색어(`FeedItemStateParam = TransferFeedStateParam`)를 주입해 클릭 람다·하이라이트 `query` 를 바인딩.
-- **계층5 (`FeedItemRenderer`)**: `FeedItemState → @Composable`. (운영에선 `@UniversalItem` + KSP 가 자동 생성하는 부분)
-- **두 맵의 키가 다름**: 계층4 는 `UiState::class`, 계층5 는 `State::class`. `FeedRenderViewModel` 이 두 맵을 잇는다.
-- **안정 key/contentType**: `LazyColumn` 이 `id`/클래스명으로 재사용 → 검색바(`"search_bar"`)는 키 입력마다 리스트가 rebuild 돼도 포커스 유지.
+- **계약·모델·매퍼는 `core:feed`** 에 모여 있다: 마커(`FeedEntity`/`FeedVO`/`FeedUiState`/`FeedItemState`/`ViewTypeStateProvider`/`FeedItemRenderer`) + `FeedLazyColumn` + `FeedRenderViewModel` + 두 매퍼 + `@Multibinds`(빈 맵 보장).
+- **두 맵의 키가 다르다**: 계층4 는 `UiState::class`, 계층5 는 `State::class`. `FeedRenderViewModel` 이 둘을 잇는다.
+- **계층4 에 화면 콜백 주입**: `FeedItemStateParam = TransferFeedStateParam`(검색어·클릭 람다). provider 가 `param` 을 받아 State 에 바인딩.
+- **6 뷰타입**: SearchBar · MyAccount · MyAccountMoreButton · RecentAccount · RecentPhone · SectionHeader. (SearchBar/MoreButton/SectionHeader 는 서버가 안 주지만 검색바와 동일하게 **"서버에서 온 것처럼"** 풀 파이프라인을 태운다 — repository 가 기본값 VO 로 주입.)
+- **조용한 누락 주의**: 키 미스 시 크래시 없이 그 아이템만 안 그려진다 → 등록 2개(계층4·5)가 반드시 짝이어야 한다.
 
 ---
 
@@ -188,94 +185,92 @@
 
 ```
 :app  (UI 호스트)
- ├─ TgAccountApp                         @HiltAndroidApp
- ├─ MainActivity                         @AndroidEntryPoint → TgTheme → TgNavHost
+ ├─ TgAccountApp                          @HiltAndroidApp
+ ├─ MainActivity                          @AndroidEntryPoint → TgTheme → TgNavHost
  └─ navigation/
-     ├─ TgNavHost                        NavDisplay + 디코레이터2 + entryProvider 수집
-     └─ AppNavViewModel                  Set<@JvmSuppressWildcards NavEntryProvider> 주입
+     ├─ TgNavHost()                       NavDisplay( rememberNavBackStack(TransferFeedKey),
+     │                                                entryProviders.forEach{ register } )
+     └─ AppNavViewModel                   @HiltViewModel · Set<@JvmSuppressWildcards NavEntryProvider> 주입
 
 :core
- ├─ common/                              ◀ 최하위 공용
- │   ├─ recent/RecipientType            @Serializable enum { ACCOUNT, PHONE }
- │   ├─ recent/JustSentStore            @Singleton  ─ StateFlow<SentRecipient?> / markSent()
- │   ├─ recent/SentRecipient            data class (id,type,name,bank,account,phone)
- │   ├─ asset/AssetJsonLoader           @Singleton  ─ assets JSON → @Serializable
- │   ├─ result/AppResult · di/CommonModule (Json @Provides)
+ ├─ common/                               ◀ 최하위 공용
+ │   ├─ result/AppResult<T> (sealed)      Success|Failure · onSuccess/onFailure/runCatchingResult
+ │   ├─ asset/AssetJsonLoader             @Singleton · assets JSON → @Serializable (Dispatchers.IO)
+ │   └─ di/CommonModule(Json) · CoroutineScopeModule(@ApplicationScope)
  ├─ navigation/
- │   ├─ NavKey:  TransferFeedKey (data object)
- │   │           TransferSendKey (data class: recipientId,type,name,bank,account,phone)
- │   └─ NavEntryProvider                interface register(scope, backStack)
- ├─ feed/                               ◀ 멀티바인딩 프레임워크(계약)
- │   ├─ FeedItemUiState · FeedItemStateParam · FeedItemState (if)
- │   ├─ ViewTypeStateProvider<T> · FeedItemRenderer (if)
- │   ├─ FeedLazyColumn (@Composable) · FeedRenderViewModel (@HiltViewModel, Map2개)
- │   └─ di/FeedMultibindsModule         @Multibinds (빈 맵 보장)
+ │   ├─ NavKeys: TransferFeedKey(data object) · TransferSendKey(recipientId,name,subtitle)  : NavKey
+ │   └─ NavEntryProvider (interface)      register(scope, backStack)
+ ├─ feed/                                 ◀ 멀티바인딩 피드 프레임워크(계약+모델+매퍼)
+ │   ├─ marker/  FeedEntity · FeedVO · FeedUiState(id) · FeedItemState(getKey)
+ │   │           · FeedItemStateParam · ViewTypeStateProvider<T> · FeedItemRenderer
+ │   ├─ FeedLazyColumn(@Composable) · FeedRenderViewModel(@HiltViewModel · Map 2개)
+ │   ├─ feedmodel/entity|vo|uiState/      Feed{MyAccount,RecentRecipient,TransferSearchBar,
+ │   │                                         MyAccountMoreButton,SectionHeader}{Entity|VO|UiState}
+ │   │                                    (+ *List, NotSupported*) · RecentRecipient 은 sealed(Account|Phone|None)
+ │   ├─ mapper/  FeedEntityToVOMapper(Impl) · FeedVOToUiStateMapper(Impl)
+ │   └─ di/      MapperModule(@Binds) · FeedMultiBindsModule(@Multibinds 빈 맵)
  └─ designsystem/
      ├─ theme/TgTheme
-     └─ component/TgComponents          TgAvatar · TgSearchField · TgListRow(highlight,badge)
-                                        · highlightContains() · TgPrimaryButton · TgTextButtonRow
+     └─ component/TgComponents            TgAvatar · TgSearchField · TgListRow(highlight,badge)
+                                          · TgPrimaryButton · TgTextButtonRow
 
 ── transfer-feed 슬라이스 (UI → Domain → Data) ──────────────────────────────────
 
-:ui:transfer-feed                       (UI Layer)
- ├─ TransferFeedRoute                   @Composable (uiState/query collect, param 구성)
- ├─ TransferFeedViewModel               @HiltViewModel
- │      ├ UseCase 2개 + JustSentStore 주입
- │      ├ TransferFeedUiState[ Loading|Loaded(items)|Error ] · TransferFeedEffect
- │      └ rebuild(): 모델(VO) → UiState 변환 + 검색필터 + justSent 병합 + 확장축소
- ├─ uistate/ (: FeedItemUiState)        SearchBarUiState(query) · MyAccountItemUiState
- │      · MyAccountMoreButtonUiState(expanded,hiddenCount)
- │      · RecentAccountItemUiState(justSent) · RecentPhoneItemUiState(justSent) · FeedSectionHeaderUiState
- ├─ state/   TransferFeedStateParam(query,onQueryChange,onClear,onToggle,onSelect×3)
- │      + SearchBarState · MyAccountItemState(query) · MyAccountMoreButtonState(hiddenCount)
- │        · RecentAccountItemState(query) · RecentPhoneItemState(query) · SectionHeaderState
- ├─ item/    SearchBarItem · MyAccountItem · MyAccountMoreButton
- │             · RecentAccountItem(badge) · RecentPhoneItem(badge) · SectionHeader
- ├─ di/ViewTypeStateModule              @IntoMap @ClassKey(UiState)  [계층4]
- ├─ di/FeedRendererModule               @IntoMap @ClassKey(State)    [계층5]
- └─ navigation/TransferFeedEntryProvider  @IntoSet NavEntryProvider
+:ui:transfer-feed
+ ├─ TransferScreen(@Composable)           Scaffold · when(Loaded→FeedLazyColumn / Loading→Progress)
+ ├─ TransferScreenState · rememberTransferScreenState()
+ │      screenUiState collect + eventChannel→Toast + TransferFeedStateParam 구성(검색/토글은 TODO)
+ ├─ vm/TransferScreenViewModel            @HiltViewModel · observe().stateIn · observeEvent()→eventChannel
+ ├─ feeditem/state/  TransferFeedStateParam(검색어+콜백) · Feed{SearchBar,MyAccountItem,
+ │                       MyAccountMoreButton,RecentAccountItem,RecentPhoneItem,SectionHeader}State
+ ├─ feeditem/        SearchBarItem · MyAccountItem · MyAccountMoreButton
+ │                       · RecentAccountItem · RecentPhoneItem · SectionHeader
+ ├─ di/ViewTypeStateModule               @IntoMap @ClassKey(UiState)  [계층4]
+ ├─ di/FeedRendererModule                @IntoMap @ClassKey(State)    [계층5]
+ ├─ di/FeedNavModule                     @Binds @IntoSet NavEntryProvider
+ ├─ navigation/TransferFeedEntryProvider  entry<TransferFeedKey>{ TransferScreen } · 선택→backStack.add
+ └─ (dead) TransferFeedRoute · vm/TransferFeedViewModel   ← 옛 명령형 rebuild() 잔재(참고용)
 
-:domain:transfer-feed                   (Domain Layer)
- ├─ usecase/   GetMyAccountsUseCase(Impl) · GetRecentRecipientsUseCase(Impl)
- │               → (data) Repository 인터페이스에 의존, (data) 모델 반환
- └─ di/UseCaseModule                    @Binds usecase
+:domain:transfer-feed
+ ├─ usecase/GetTransferScreenUiStateUseCase(Impl)
+ │      observe(): combine(loading, items)→TransferScreenUiState · observeEvent(): UiEvent.ShowErrorToast
+ ├─ usecase/LoadTransferFeedUseCase(Impl)  observe(): repo.getMergedViewTypes().map{ VO→UiState }
+ ├─ screenuistate/TransferScreenUiState   sealed: Loading | Loaded(items)   (Error 없음)
+ └─ di/UseCaseModule                      @InstallIn(ViewModelComponent) @Binds
 
-:data:transfer-feed                     (Data Layer, 최하위)
- ├─ model/      MyAccountVO(showInCollapsed) · RecentRecipientVO[ sealed: Account|Phone ]  ← 공개 모델
- ├─ repository/ MyAccountRepository · RecentRecipientRepository            (interface, public)
- │              MyAccountRepositoryImpl · RecentRecipientRepositoryImpl     (impl, internal)
- ├─ service/    MyAccountService / RecentRecipientService (if) ─ Fake* 구현(delay+실패토글)  ← DataSource
- │              MockFailureSwitch @Singleton
- ├─ entity/     MyAccountEntity · RecentRecipientEntity  @Serializable      ← DTO
- ├─ mapper/     Entity → 모델(VO)  (toVO)
- ├─ di/DataModule                       @Binds service/repository
- └─ assets/     my_accounts.json · recent_recipients.json(100건)
+:data:transfer-feed                       (최하위)
+ ├─ repository/TransferFeedViewTypeRepository(interface) · ...Impl(internal)
+ │      getMergedViewTypes(): combine(myAccounts, recents) + searchBar/더보기/헤더 기본 VO 주입
+ ├─ service/  MyAccountService · RecentRecipientService (if) ─ Fake* (delay) · MockFailureSwitch(@Singleton)
+ ├─ di/       ServiceModule(@Binds) · RepositoryModule(@Binds, internal)
+ └─ assets/   my_accounts.json · recent_recipients.json
+     (Entity/VO/UiState·매퍼는 core:feed 소유)
 
 ── transfer-send 슬라이스 (UI → Domain → Data) ──────────────────────────────────
 
-:ui:transfer-send                       (UI Layer)
- ├─ TransferSendRoute                   @Composable (타입별 헤더 · 금액상한 다이얼로그 · 진행오버레이 · BackHandler)
- ├─ TransferSendViewModel               @HiltViewModel  SendMoneyUseCase + JustSentStore 주입
- │      ├ TransferSendUiState(amount,isSending,showMaxDialog; canSend, amountValue)
- │      ├ const MAX_AMOUNT = 2_000_000
- │      └ onAmountChange / onClickSend(SentRecipient) / onDismissMaxDialog
- └─ navigation/TransferSendEntryProvider  @IntoSet NavEntryProvider
+:ui:transfer-send
+ ├─ TransferSendRoute(@Composable)        금액 입력 · 진행 오버레이 · BackHandler · effect collect
+ ├─ TransferSendViewModel                 @HiltViewModel · SendMoneyUseCase 주입
+ │      ├ TransferSendUiState(amount,isSending; canSend,amountValue)
+ │      └ TransferSendEffect.NavigateBackToFeed (Channel) · onClickSend()
+ └─ navigation/TransferSendEntryProvider  entry<TransferSendKey>{ TransferSendRoute } · @Binds @IntoSet
+     (+ TransferSendNavModule)            완료→onSendComplete→backStack.removeLastOrNull()
 
-:domain:transfer-send                   (Domain Layer)
- ├─ usecase/SendMoneyUseCase(Impl)      → (data) TransferSendRepository 에 위임
- └─ di/UseCaseModule
+:domain:transfer-send
+ ├─ usecase/SendMoneyUseCase(Impl)        invoke(amount) → TransferSendRepository.sendMoney
+ └─ di/UseCaseModule                      @InstallIn(SingletonComponent) @Binds
 
-:data:transfer-send                     (Data Layer, 최하위)
- ├─ repository/ TransferSendRepository(interface) · TransferSendRepositoryImpl(internal)
- ├─ datasource/ TransferSendDataSource(if) · FakeTransferSendDataSource(delay 10초)
- └─ di/DataModule                       @Binds datasource/repository
+:data:transfer-send                       (최하위)
+ ├─ repository/TransferSendRepository(interface) · ...Impl(internal)
+ ├─ datasource/TransferSendDataSource(if) · FakeTransferSendDataSource  delay(SEND_DELAY_MS=3초)
+ └─ di/DataModule                         @Binds(internal) datasource/repository
 ```
 
 **관계 요약**
-- 레이어 방향: `ui → domain → data` (한 방향). data 가 모델·repository(if+impl)·데이터소스를 모두 소유하는 **최하위**.
-- `FeedItemUiState`(core:feed) ◀ 구현 ─ `XxxUiState`(ui/uistate) ◀ 변환 ─ `XxxState`(ui/state) ◀ 렌더 ─ `XxxItem`(ui/item).
-- `NavEntryProvider`(core:navigation) ◀ `@IntoSet` ─ 각 feature 의 `*EntryProvider` → `AppNavViewModel` 이 `Set` 으로 수집 → `TgNavHost` 가 등록.
-- `JustSentStore`(core:common) 를 송금(write)·피드(read) 두 ViewModel 이 공유해 화면 간 상태를 전달.
+- 레이어 방향 `ui → domain → data` (한 방향). data 가 repository(if+impl)·Service/DataSource 를 모두 소유하는 **최하위**.
+- 피드 한 줄: `FeedUiState`(core:feed) ◀구현─ `Feed*UiState` ◀변환(계층4)─ `Feed*State` ◀렌더(계층5)─ `*Item`.
+- `NavEntryProvider`(core:navigation) ◀`@IntoSet`─ 각 feature `*EntryProvider` → `AppNavViewModel` 이 `Set` 수집 → `TgNavHost` 등록.
+- 화면 전환은 콜백/Effect 로만: 선택 → `backStack.add(TransferSendKey)`, 송금 완료 → `NavigateBackToFeed` → `backStack.removeLastOrNull()`.
 
 ---
 
@@ -284,11 +279,14 @@
 ```bash
 ./gradlew assembleDebug          # 디버그 APK 빌드
 ./gradlew installDebug           # 연결된 기기/에뮬레이터 설치
+./gradlew compileDebugKotlin     # 전 모듈 컴파일 검증
 ```
 
-## 동작 검증 체크리스트 (에뮬레이터 end-to-end)
-- **확장/축소**: 기본 축소(showInCollapsed) → `+N개 더보기` → 전체+`접기` → 복귀.
-- **검색**: "토" 입력 → 매칭 계좌 노출(숨은 계좌 포함, 더보기/접기 숨김, 매칭부 bold) / 빈 검색 → 전체 복원.
-- **방금 송금**: 입금처 선택 → 송금 완료 복귀 → 검색어 초기화 + 해당 입금처 최근 최상단 `[방금 송금]` 뱃지.
-- **송금 화면**: account 타입 이름/은행/계좌 · phone 타입 이름/전화번호 · 금액 200만 초과 거부+다이얼로그 · 0/빈값 disable · 10초 진행 중 전체 입력차단.
-- **회전**: 검색어/금액/확장상태 유지, API 미재호출.
+## 동작 검증 체크리스트 (현재 구현 기준)
+- **피드 로드**: 앱 시작 → `입금처 선택` → 내 계좌 + 최근 보낸 계좌 리스트 표시(assets JSON, mock 지연).
+- **로드 실패**: `MockFailureSwitch` 토글 시 에러 **Toast 1회**(상태 화면은 그대로 — 일회성 이벤트).
+- **송금**: 아이템 선택 → 송금 화면(이름) → 금액 입력 후 송금 → 3초 진행 → 자동 복귀.
+- **회전**: 입력값·구독 유지, 데이터 미재호출.
+
+> 🚧 **미구현(다음 단계)**: 검색 하이라이트 · 더보기 확장/축소 · "방금 송금" 뱃지 는 조립 전담 UseCase 도입 후 활성화 예정.
+> 컴포넌트(`TgSearchField`·`TgListRow(highlight,badge)`)와 모델(`justSent` 등)은 준비되어 있고, 조립 로직만 배선하면 된다.

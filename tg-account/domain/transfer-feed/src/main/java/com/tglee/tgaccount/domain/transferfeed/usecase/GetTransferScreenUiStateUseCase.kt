@@ -36,11 +36,6 @@ interface GetTransferScreenUiStateUseCase {
         ) : TransferScreenUiState
     }
 
-    data class UseCaseState(
-        val isLoading: Boolean = true,
-        val error: Throwable? = null,
-    )
-
     suspend fun invoke(action: Action)
 
     fun observe(): Flow<TransferScreenUiState>
@@ -50,7 +45,12 @@ internal class GetTransferScreenUiStateUseCaseImpl @Inject constructor(
     private val loadTransferFeedUseCase: LoadTransferFeedUseCase,
 ) : GetTransferScreenUiStateUseCase {
 
-    private val uiState = MutableStateFlow(GetTransferScreenUiStateUseCase.UseCaseState())
+    private data class UseCaseState(
+        val isLoading: Boolean = true,
+        val error: Throwable? = null,
+    )
+
+    private val uiState = MutableStateFlow(UseCaseState())
 
     override suspend fun invoke(action: GetTransferScreenUiStateUseCase.Action) {
         when (action) {
@@ -76,17 +76,22 @@ internal class GetTransferScreenUiStateUseCaseImpl @Inject constructor(
             state.toScreenState(items)
         }
 
-    private fun GetTransferScreenUiStateUseCase.UseCaseState.toScreenState(
+    private fun UseCaseState.toScreenState(
         items: List<FeedUiState>,
     ): TransferScreenUiState =
         when {
             isLoading -> TransferScreenUiState.Loading()
 
-            error != null -> TransferScreenUiState.Error(error = error.message.toString())
+            error != null -> TransferScreenUiState.Error(
+                error = error.message ?: DEFAULT_ERROR_MESSAGE
+            )
 
             items.isEmpty() -> TransferScreenUiState.Loading()
 
             else -> TransferScreenUiState.Loaded(items = items)
         }
 
+    companion object {
+        private const val DEFAULT_ERROR_MESSAGE = "데이터를 불러오지 못했습니다."
+    }
 }

@@ -1,7 +1,7 @@
 package com.tglee.tgaccount.data.transferfeed.repository
 
 import com.tglee.tgaccount.core.feed.feedmodel.vo.FeedTransferSearchBarVO
-import com.tglee.tgaccount.core.feed.mapper.FeedEntityToVoMapper
+import com.tglee.tgaccount.core.feed.mapper.FeedEntityToVOMapper
 import com.tglee.tgaccount.core.feed.marker.FeedVO
 import com.tglee.tgaccount.data.transferfeed.service.MyAccountService
 import com.tglee.tgaccount.data.transferfeed.service.RecentRecipientService
@@ -12,14 +12,14 @@ import javax.inject.Inject
 
 interface TransferFeedViewTypeRepository {
 
-    suspend fun refreshAccounts()
+    suspend fun refresh()
     fun getMergedViewTypes(): Flow<List<FeedVO>>
 }
 
 internal class TransferFeedViewTypeRepositoryImpl @Inject constructor(
     private val myAccountService: MyAccountService,
     private val recentRecipientService: RecentRecipientService,
-    private val feedEntityToVoMapper: FeedEntityToVoMapper,
+    private val feedEntityToVOMapper: FeedEntityToVOMapper,
 ) : TransferFeedViewTypeRepository {
 
     private val myAccounts = MutableStateFlow(listOf<FeedVO>())
@@ -28,13 +28,13 @@ internal class TransferFeedViewTypeRepositoryImpl @Inject constructor(
     private val searchBar = MutableStateFlow(FeedTransferSearchBarVO(""))
 
 
-    override suspend fun refreshAccounts() {
+    override suspend fun refresh() {
         myAccounts.value = myAccountService.getMyAccounts().map {
-            feedEntityToVoMapper.entityToVO(it)
+            feedEntityToVOMapper.entityToVO(it)
         }
 
         recentRecipients.value = recentRecipientService.getRecentRecipients().map {
-            feedEntityToVoMapper.entityToVO(it)
+            feedEntityToVOMapper.entityToVO(it)
         }
 
         searchBar.value = FeedTransferSearchBarVO("")

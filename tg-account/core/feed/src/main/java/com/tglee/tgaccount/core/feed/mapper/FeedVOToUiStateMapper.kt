@@ -13,8 +13,11 @@ import com.tglee.tgaccount.core.feed.feedmodel.vo.FeedRecentRecipientVOList
 import com.tglee.tgaccount.core.feed.feedmodel.vo.FeedTransferSearchBarVO
 import com.tglee.tgaccount.core.feed.marker.FeedUiState
 import com.tglee.tgaccount.core.feed.marker.FeedVO
-import java.util.UUID
 import javax.inject.Inject
+
+private const val ID_SEARCH_BAR = "feed_transfer_search_bar"
+private const val ID_MY_ACCOUNT_LIST = "feed_my_account_list"
+private const val ID_RECENT_RECIPIENT_LIST = "feed_recent_recipient_list"
 
 
 interface FeedVOToUiStateMapper {
@@ -28,24 +31,16 @@ class FeedVOToUiStateMapperImpl @Inject constructor() : FeedVOToUiStateMapper {
             when (this) {
                 is FeedTransferSearchBarVO -> {
                     FeedTransferSearchBarUiState(
-                        id = UUID.randomUUID().toString(),
+                        id = ID_SEARCH_BAR,
                         searchKeyword = searchKeyword
                     )
                 }
 
-                is FeedMyAccountVO -> {
-                    FeedMyAccountUiState(
-                        id = id,
-                        accountName = accountName,
-                        accountNumber = accountNumber,
-                        bankName = bankName,
-                        iconUrl = iconUrl
-                    )
-                }
+                is FeedMyAccountVO -> myAccountToUiState(this)
 
                 is FeedMyAccountVOList -> {
                     FeedMyAccountListUiState(
-                        id = UUID.randomUUID().toString(),
+                        id = ID_MY_ACCOUNT_LIST,
                         list = list.map { myAccountToUiState(it) }
                     )
                 }
@@ -54,7 +49,7 @@ class FeedVOToUiStateMapperImpl @Inject constructor() : FeedVOToUiStateMapper {
 
                 is FeedRecentRecipientVOList -> {
                     FeedRecentRecipientListUiState(
-                        id = UUID.randomUUID().toString(),
+                        id = ID_RECENT_RECIPIENT_LIST,
                         list = list.map { recentRecipientToUiState(it) }
                     )
                 }

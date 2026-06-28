@@ -9,9 +9,10 @@ android {
 }
 
 dependencies {
-    // 데이터 레이어가 최하위: 모델/리포지토리 인터페이스를 직접 소유하므로 domain 에 의존하지 않는다.
+    // 모델(VO/Entity)·마커는 core:feed 가 소유한다. 공개 API(getMergedViewTypes 의 FeedVO 등)에
+    // core:feed 타입이 노출되므로 api 로 전이시킨다.
     implementation(project(":core:common"))
-    implementation(project(":core:feed"))
+    api(project(":core:feed"))
     implementation(libs.androidx.constraintlayout)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)

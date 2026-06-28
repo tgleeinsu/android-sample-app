@@ -25,9 +25,9 @@ internal class LoadTransferFeedUseCaseImpl @Inject constructor(
 ) : LoadTransferFeedUseCase {
 
     override suspend fun invoke(action: LoadTransferFeedUseCase.Action) {
-        when(action) {
-            LoadTransferFeedUseCase.Action.Load -> transferFeedViewTypeRepository.refreshAccounts()
-            LoadTransferFeedUseCase.Action.Refresh -> transferFeedViewTypeRepository.refreshAccounts()
+        when (action) {
+            LoadTransferFeedUseCase.Action.Load,
+            LoadTransferFeedUseCase.Action.Refresh -> transferFeedViewTypeRepository.refresh()
         }
     }
 

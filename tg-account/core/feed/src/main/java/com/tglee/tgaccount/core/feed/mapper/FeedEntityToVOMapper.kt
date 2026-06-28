@@ -17,12 +17,12 @@ import com.tglee.tgaccount.core.feed.marker.FeedVO
 import javax.inject.Inject
 
 
-interface FeedEntityToVoMapper {
+interface FeedEntityToVOMapper {
     fun entityToVO(entity: FeedEntity): FeedVO
 }
 
 
-class FeedEntityToVOMapperImpl @Inject constructor() : FeedEntityToVoMapper {
+class FeedEntityToVOMapperImpl @Inject constructor() : FeedEntityToVOMapper {
     override fun entityToVO(entity: FeedEntity): FeedVO {
         return with(entity) {
             when (this) {

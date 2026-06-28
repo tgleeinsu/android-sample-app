@@ -28,7 +28,7 @@ internal fun TransferScreen(
             is TransferScreenUiState.Loaded -> {
                 FeedLazyColumn(
                     items = uiState.items,
-                    param = param,
+                    param = screenState.itemStateParam,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = padding,
                 )

@@ -12,12 +12,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tglee.tgaccount.core.navigation.TransferSendKey
 import com.tglee.tgaccount.domain.transferfeed.screenuistate.TransferScreenUiState
 import com.tglee.tgaccount.domain.transferfeed.usecase.GetTransferScreenUiStateUseCase
+import com.tglee.tgaccount.ui.transferfeed.feeditem.state.TransferFeedStateParam
 import com.tglee.tgaccount.ui.transferfeed.vm.TransferScreenViewModel
-import kotlin.io.path.Path
 
 @Stable
 internal data class TransferScreenState(
-    val screenUiState: TransferScreenUiState
+    val screenUiState: TransferScreenUiState,
+    val itemStateParam: TransferFeedStateParam,
 )
 
 
@@ -40,13 +41,48 @@ internal fun rememberTransferScreenState(
         }
     }
 
+    val itemStateParam = remember(onSelectRecipient) {
+        TransferFeedStateParam(
+            searchKeyword = "", // TODO
+            onChangeSearchKeyword = {}, // TODO
+            onClearSearchKeyword = {}, // TODO
+            onToggleMyAccountMore = {}, // TODO
+            onSelectMyAccount = { acc ->
+                onSelectRecipient(
+                    TransferSendKey(
+                        recipientId = acc.id,
+                        name = acc.accountName,
+                    ),
+                )
+            },
+            onSelectRecentAccount = { rcp ->
+                onSelectRecipient(
+                    TransferSendKey(
+                        recipientId = rcp.id,
+                        name = rcp.name,
+                    ),
+                )
+            },
+            onSelectRecentPhone = { rcp ->
+                onSelectRecipient(
+                    TransferSendKey(
+                        recipientId = rcp.id,
+                        name = rcp.name,
+                    ),
+                )
+            },
+        )
+    }
+
     return remember(
         viewModel,
         context,
         screenUiState,
+        itemStateParam,
     ) {
         TransferScreenState(
             screenUiState = screenUiState,
+            itemStateParam = itemStateParam,
         )
     }
 }

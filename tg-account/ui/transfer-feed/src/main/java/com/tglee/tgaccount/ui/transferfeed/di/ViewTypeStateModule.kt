@@ -105,7 +105,7 @@ internal object ViewTypeStateModule {
                 return remember(uiState, p) {
                     FeedRecentAccountItemState(
                         uiState,
-                        p.query
+                        p.searchKeyword
                     ) { p.onSelectRecentAccount(uiState) }
                 }
             }
@@ -125,7 +125,7 @@ internal object ViewTypeStateModule {
                 return remember(uiState, p) {
                     FeedRecentPhoneItemState(
                         uiState,
-                        p.query
+                        p.searchKeyword
                     ) { p.onSelectRecentPhone(uiState) }
                 }
             }

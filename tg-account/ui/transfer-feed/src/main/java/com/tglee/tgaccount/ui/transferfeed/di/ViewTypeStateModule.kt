@@ -2,22 +2,23 @@ package com.tglee.tgaccount.ui.transferfeed.di
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import com.tglee.tgaccount.core.feed.feedmodel.uiState.FeedMyAccountUiState
+import com.tglee.tgaccount.core.feed.feedmodel.uiState.FeedRecentRecipientUiState
+import com.tglee.tgaccount.core.feed.feedmodel.uiState.FeedTransferSearchBarUiState
 import com.tglee.tgaccount.core.feed.marker.FeedItemState
 import com.tglee.tgaccount.core.feed.marker.FeedItemStateParam
 import com.tglee.tgaccount.core.feed.marker.ViewTypeStateProvider
+import com.tglee.tgaccount.ui.transferfeed.feeditem.state.FeedMyAccountItemState
+import com.tglee.tgaccount.ui.transferfeed.feeditem.state.FeedMyAccountMoreButtonState
+import com.tglee.tgaccount.ui.transferfeed.feeditem.state.FeedRecentAccountItemState
+import com.tglee.tgaccount.ui.transferfeed.feeditem.state.FeedRecentPhoneItemState
+import com.tglee.tgaccount.ui.transferfeed.feeditem.state.FeedSearchBarState
+import com.tglee.tgaccount.ui.transferfeed.feeditem.state.FeedSectionHeaderState
+import com.tglee.tgaccount.ui.transferfeed.feeditem.state.TransferFeedStateParam
 import com.tglee.tgaccount.ui.transferfeed.uistate.FeedSectionHeaderUiState
-import com.tglee.tgaccount.ui.transferfeed.uistate.MyAccountItemUiState
 import com.tglee.tgaccount.ui.transferfeed.uistate.MyAccountMoreButtonUiState
 import com.tglee.tgaccount.ui.transferfeed.uistate.RecentAccountItemUiState
 import com.tglee.tgaccount.ui.transferfeed.uistate.RecentPhoneItemUiState
-import com.tglee.tgaccount.ui.transferfeed.uistate.SearchBarUiState
-import com.tglee.tgaccount.ui.transferfeed.state.MyAccountItemState
-import com.tglee.tgaccount.ui.transferfeed.state.MyAccountMoreButtonState
-import com.tglee.tgaccount.ui.transferfeed.state.RecentAccountItemState
-import com.tglee.tgaccount.ui.transferfeed.state.RecentPhoneItemState
-import com.tglee.tgaccount.ui.transferfeed.state.SearchBarState
-import com.tglee.tgaccount.ui.transferfeed.state.SectionHeaderState
-import com.tglee.tgaccount.ui.transferfeed.state.TransferFeedStateParam
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -25,76 +26,128 @@ import dagger.hilt.components.SingletonComponent
 import dagger.multibindings.ClassKey
 import dagger.multibindings.IntoMap
 
-/**
- * 계층4: UiState -> FeedItemState 변환기 등록 (@IntoMap @ClassKey(UiState)).
- */
 @Module
 @InstallIn(SingletonComponent::class)
 internal object ViewTypeStateModule {
 
     @Provides
     @IntoMap
-    @ClassKey(SearchBarUiState::class)
-    fun searchBar(): ViewTypeStateProvider<*> = object : ViewTypeStateProvider<SearchBarUiState> {
-        @Composable
-        override fun rememberState(uiState: SearchBarUiState, param: FeedItemStateParam): FeedItemState? {
-            val p = param as? TransferFeedStateParam ?: return null
-            return remember(uiState.query, p) { SearchBarState(uiState.query, p.onQueryChange, p.onClearQuery) }
+    @ClassKey(FeedTransferSearchBarUiState::class)
+    fun searchBar(): ViewTypeStateProvider<*> =
+        object : ViewTypeStateProvider<FeedTransferSearchBarUiState> {
+            @Composable
+            override fun rememberState(
+                uiState: FeedTransferSearchBarUiState,
+                param: FeedItemStateParam
+            ): FeedItemState? {
+                val p = param as? TransferFeedStateParam ?: return null
+                return remember(uiState, p) {
+                    FeedSearchBarState(
+                        uiState = uiState,
+                        value = "",
+                        onValueChange = {},
+                        onClear = {}
+                    )
+                }
+            }
         }
-    }
 
     @Provides
     @IntoMap
-    @ClassKey(MyAccountItemUiState::class)
-    fun myAccount(): ViewTypeStateProvider<*> = object : ViewTypeStateProvider<MyAccountItemUiState> {
-        @Composable
-        override fun rememberState(uiState: MyAccountItemUiState, param: FeedItemStateParam): FeedItemState? {
-            val p = param as? TransferFeedStateParam ?: return null
-            return remember(uiState, p) { MyAccountItemState(uiState, p.query) { p.onSelectMyAccount(uiState) } }
+    @ClassKey(FeedMyAccountUiState::class)
+    fun myAccount(): ViewTypeStateProvider<*> =
+        object : ViewTypeStateProvider<FeedMyAccountUiState> {
+            @Composable
+            override fun rememberState(
+                uiState: FeedMyAccountUiState,
+                param: FeedItemStateParam
+            ): FeedItemState? {
+                val p = param as? TransferFeedStateParam ?: return null
+                return remember(uiState, p) {
+                    FeedMyAccountItemState(
+                        uiState = uiState,
+                        onClick = {},
+                    )
+                }
+            }
         }
-    }
 
     @Provides
     @IntoMap
     @ClassKey(MyAccountMoreButtonUiState::class)
-    fun myAccountMore(): ViewTypeStateProvider<*> = object : ViewTypeStateProvider<MyAccountMoreButtonUiState> {
-        @Composable
-        override fun rememberState(uiState: MyAccountMoreButtonUiState, param: FeedItemStateParam): FeedItemState? {
-            val p = param as? TransferFeedStateParam ?: return null
-            return remember(uiState, p) {
-                MyAccountMoreButtonState(uiState.expanded, uiState.hiddenCount, p.onToggleMyAccountMore)
+    fun myAccountMore(): ViewTypeStateProvider<*> =
+        object : ViewTypeStateProvider<MyAccountMoreButtonUiState> {
+            @Composable
+            override fun rememberState(
+                uiState: MyAccountMoreButtonUiState,
+                param: FeedItemStateParam
+            ): FeedItemState? {
+                val p = param as? TransferFeedStateParam ?: return null
+                return remember(uiState, p) {
+                    FeedMyAccountMoreButtonState(
+                        uiState.expanded,
+                        uiState.hiddenCount,
+                        p.onToggleMyAccountMore
+                    )
+                }
             }
         }
-    }
 
     @Provides
     @IntoMap
-    @ClassKey(RecentAccountItemUiState::class)
-    fun recentAccount(): ViewTypeStateProvider<*> = object : ViewTypeStateProvider<RecentAccountItemUiState> {
-        @Composable
-        override fun rememberState(uiState: RecentAccountItemUiState, param: FeedItemStateParam): FeedItemState? {
-            val p = param as? TransferFeedStateParam ?: return null
-            return remember(uiState, p) { RecentAccountItemState(uiState, p.query) { p.onSelectRecentAccount(uiState) } }
+    @ClassKey(FeedRecentRecipientUiState.Account::class)
+    fun recentAccount(): ViewTypeStateProvider<*> =
+        object : ViewTypeStateProvider<FeedRecentRecipientUiState.Account> {
+            @Composable
+            override fun rememberState(
+                uiState: FeedRecentRecipientUiState.Account,
+                param: FeedItemStateParam
+            ): FeedItemState? {
+                val p = param as? TransferFeedStateParam ?: return null
+                return remember(uiState, p) {
+                    FeedRecentAccountItemState(
+                        uiState,
+                        p.query
+                    ) { p.onSelectRecentAccount(uiState) }
+                }
+            }
         }
-    }
 
     @Provides
     @IntoMap
-    @ClassKey(RecentPhoneItemUiState::class)
-    fun recentPhone(): ViewTypeStateProvider<*> = object : ViewTypeStateProvider<RecentPhoneItemUiState> {
-        @Composable
-        override fun rememberState(uiState: RecentPhoneItemUiState, param: FeedItemStateParam): FeedItemState? {
-            val p = param as? TransferFeedStateParam ?: return null
-            return remember(uiState, p) { RecentPhoneItemState(uiState, p.query) { p.onSelectRecentPhone(uiState) } }
+    @ClassKey(FeedRecentRecipientUiState.Phone::class)
+    fun recentPhone(): ViewTypeStateProvider<*> =
+        object : ViewTypeStateProvider<FeedRecentRecipientUiState.Phone> {
+            @Composable
+            override fun rememberState(
+                uiState: FeedRecentRecipientUiState.Phone,
+                param: FeedItemStateParam
+            ): FeedItemState? {
+                val p = param as? TransferFeedStateParam ?: return null
+                return remember(uiState, p) {
+                    FeedRecentPhoneItemState(
+                        uiState,
+                        p.query
+                    ) { p.onSelectRecentPhone(uiState) }
+                }
+            }
         }
-    }
 
     @Provides
     @IntoMap
     @ClassKey(FeedSectionHeaderUiState::class)
-    fun sectionHeader(): ViewTypeStateProvider<*> = object : ViewTypeStateProvider<FeedSectionHeaderUiState> {
-        @Composable
-        override fun rememberState(uiState: FeedSectionHeaderUiState, param: FeedItemStateParam): FeedItemState =
-            remember(uiState) { SectionHeaderState(title = uiState.title, headerKey = uiState.id) }
-    }
+    fun sectionHeader(): ViewTypeStateProvider<*> =
+        object : ViewTypeStateProvider<FeedSectionHeaderUiState> {
+            @Composable
+            override fun rememberState(
+                uiState: FeedSectionHeaderUiState,
+                param: FeedItemStateParam
+            ): FeedItemState =
+                remember(uiState) {
+                    FeedSectionHeaderState(
+                        title = uiState.title,
+                        headerKey = uiState.id
+                    )
+                }
+        }
 }

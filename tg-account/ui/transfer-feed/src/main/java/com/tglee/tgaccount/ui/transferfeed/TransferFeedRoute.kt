@@ -20,7 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.tglee.tgaccount.core.common.recent.RecipientType
 import com.tglee.tgaccount.core.feed.FeedLazyColumn
 import com.tglee.tgaccount.core.navigation.TransferSendKey
-import com.tglee.tgaccount.ui.transferfeed.state.TransferFeedStateParam
+import com.tglee.tgaccount.ui.transferfeed.feeditem.state.TransferFeedStateParam
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

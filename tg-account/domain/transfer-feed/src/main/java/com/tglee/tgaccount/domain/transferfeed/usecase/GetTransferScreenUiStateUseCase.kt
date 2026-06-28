@@ -4,10 +4,12 @@ import com.tglee.tgaccount.core.common.result.onFailure
 import com.tglee.tgaccount.core.common.result.onSuccess
 import com.tglee.tgaccount.core.common.result.runCatchingResult
 import com.tglee.tgaccount.core.feed.marker.FeedUiState
-import com.tglee.tgaccount.domain.transferfeed.usecase.GetTransferScreenUiStateUseCase.TransferScreenUiState
+import com.tglee.tgaccount.domain.transferfeed.screenuistate.TransferScreenUiState
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
@@ -17,28 +19,15 @@ interface GetTransferScreenUiStateUseCase {
         object Refresh : Action
     }
 
-    sealed interface TransferScreenUiState {
-        val isLoading: Boolean
-
-        data class Loading(
-            override val isLoading: Boolean = true
-        ) : TransferScreenUiState
-
-
-        data class Loaded(
-            override val isLoading: Boolean = false,
-            val items: List<FeedUiState>,
-        ) : TransferScreenUiState
-
-        data class Error(
-            override val isLoading: Boolean = false,
+    sealed interface UiEvent {
+        data class ShowErrorToast(
             val error: String
-        ) : TransferScreenUiState
+        ): UiEvent
     }
-
     suspend fun invoke(action: Action)
 
     fun observe(): Flow<TransferScreenUiState>
+    fun observeEvent(): Flow<UiEvent>
 }
 
 internal class GetTransferScreenUiStateUseCaseImpl @Inject constructor(
@@ -47,10 +36,10 @@ internal class GetTransferScreenUiStateUseCaseImpl @Inject constructor(
 
     private data class UseCaseState(
         val isLoading: Boolean = true,
-        val error: Throwable? = null,
     )
 
     private val uiState = MutableStateFlow(UseCaseState())
+    private val eventChannel = Channel<GetTransferScreenUiStateUseCase.UiEvent>(Channel.BUFFERED)
 
     override suspend fun invoke(action: GetTransferScreenUiStateUseCase.Action) {
         when (action) {
@@ -60,14 +49,14 @@ internal class GetTransferScreenUiStateUseCaseImpl @Inject constructor(
     }
 
     private suspend fun load() {
-        uiState.update { it.copy(isLoading = true, error = null) }
+        uiState.update { it.copy(isLoading = true) }
 
         runCatchingResult {
             loadTransferFeedUseCase.invoke(LoadTransferFeedUseCase.Action.Load)
         }.onSuccess {
             uiState.update { it.copy(isLoading = false) }
         }.onFailure { throwable ->
-            uiState.update { it.copy(isLoading = false, error = throwable) }
+            eventChannel.send(GetTransferScreenUiStateUseCase.UiEvent.ShowErrorToast(throwable.message ?: DEFAULT_ERROR_MESSAGE))
         }
     }
 
@@ -76,15 +65,14 @@ internal class GetTransferScreenUiStateUseCaseImpl @Inject constructor(
             state.toScreenState(items)
         }
 
+    override fun observeEvent(): Flow<GetTransferScreenUiStateUseCase.UiEvent> =
+        eventChannel.receiveAsFlow()
+
     private fun UseCaseState.toScreenState(
         items: List<FeedUiState>,
     ): TransferScreenUiState =
         when {
             isLoading -> TransferScreenUiState.Loading()
-
-            error != null -> TransferScreenUiState.Error(
-                error = error.message ?: DEFAULT_ERROR_MESSAGE
-            )
 
             items.isEmpty() -> TransferScreenUiState.Loading()
 

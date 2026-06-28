@@ -13,7 +13,6 @@ dependencies {
     implementation(project(":core:designsystem"))
     implementation(project(":core:navigation"))
     implementation(project(":domain:transfer-feed"))
-    implementation(project(":data:transfer-feed"))
     implementation(libs.hilt.navigation.compose)
     implementation(libs.kotlinx.coroutines.android)
 }
